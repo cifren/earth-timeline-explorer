@@ -1,0 +1,17 @@
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.env
+
+# Tool caches written by the containers into the bind mounts
+.cache/
+
+# Back
+back/tmp/
+back/bin/
+
+# Web
+web/node_modules/
+web/dist/

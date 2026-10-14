@@ -1,0 +1,24 @@
+# 6. Lint, format and boundaries with ESLint and Prettier
+
+Date: 2026-10-14
+Status: Accepted — not yet implemented
+
+## Context
+
+ADR common 0002 and 0005 require a standard linter with recommended presets, a standard
+formatter and a boundary checker.
+
+## Decision
+
+- **ESLint** with recommended presets only: `typescript-eslint` (type-checked),
+  `eslint-plugin-react-hooks`, `eslint-plugin-jsx-a11y`.
+- **Prettier** is the only formatter; ESLint does not check formatting.
+- **eslint-plugin-boundaries** enforces the architecture: no import between contexts,
+  contexts imported only through their `index.ts`, `core` never imports a context,
+  `shared` imports neither, layers point inward.
+- Generated code (`api-client`) is excluded from lint and formatting.
+
+## Consequences
+
+- `make lint` is the single quality gate of the web.
+- Accessibility smells are caught as early as type errors.
