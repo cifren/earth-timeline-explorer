@@ -17,10 +17,13 @@ services:
       REDIS_ADDR: "redis:6379"
       COMMONS_USER_AGENT: "${COMMONS_USER_AGENT:-FriseChrono/0.1 (https://github.com/cifren/earth-timeline-explorer)}"
       CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+      OTEL_SERVICE_NAME: "frise-chrono-back"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
     ports:
       - "8080:8080"
     depends_on:
       - redis
+      - jaeger
 
   web:
     build:
@@ -45,6 +48,12 @@ services:
     image: redis:8-alpine
     volumes:
       - redis-data:/data
+
+  # Trace viewer: receives the OTLP traces of the back and keeps them in memory.
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports:
+      - "16686:16686"
 
 volumes:
   redis-data:

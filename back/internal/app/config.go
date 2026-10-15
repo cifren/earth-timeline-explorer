@@ -14,6 +14,8 @@ type Config struct {
 	RedisAddr          string
 	CommonsUserAgent   string
 	CORSAllowedOrigins []string
+	// TracesEnabled is set when an OTLP endpoint receives the traces.
+	TracesEnabled bool
 }
 
 // LoadConfig reads the configuration from the environment variables.
@@ -22,6 +24,7 @@ func LoadConfig() (Config, error) {
 		HTTPAddr:         envOr("HTTP_ADDR", ":8080"),
 		RedisAddr:        os.Getenv("REDIS_ADDR"),
 		CommonsUserAgent: os.Getenv("COMMONS_USER_AGENT"),
+		TracesEnabled:    os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "",
 	}
 	if origins := os.Getenv("CORS_ALLOWED_ORIGINS"); origins != "" {
 		config.CORSAllowedOrigins = strings.Split(origins, ",")

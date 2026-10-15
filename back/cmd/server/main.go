@@ -9,10 +9,11 @@ import (
 	"syscall"
 
 	"frise-chrono/back/internal/app"
+	"frise-chrono/back/internal/shared/telemetry"
 )
 
 func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	slog.SetDefault(slog.New(telemetry.NewLogHandler(slog.NewJSONHandler(os.Stdout, nil))))
 
 	config, err := app.LoadConfig()
 	if err != nil {

@@ -63,6 +63,22 @@ Environment variables, set in `docker-compose.yml`:
 | `REDIS_ADDR`           | yes      | Redis address, e.g. `redis:6379`                     |
 | `COMMONS_USER_AGENT`   | yes      | Identifying User-Agent sent to Wikimedia Commons     |
 | `CORS_ALLOWED_ORIGINS` | no       | Comma-separated browser origins allowed to call the API |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | OTLP/HTTP receiver of the traces, e.g. `http://jaeger:4318`; tracing is off when unset |
+| `OTEL_SERVICE_NAME`    | no       | Service name shown in the traces                     |
+
+## Traces and logs
+
+Every request is traced with OpenTelemetry and sent to Jaeger
+(http://localhost:16686, service `frise-chrono-back`). A trace shows the request with its
+Redis commands and Wikimedia Commons calls, each with its duration. Logs written during
+a request appear twice: in `./compose logs back`, with `trace_id` and `span_id`, and in
+the trace, under the *Events* of the request step; an error log marks that step as
+failed.
+
+**Example — finding why a draw was slow:** open Jaeger, pick the service and the
+operation `GET /api/v1/images`, sort by duration and open the slowest trace. Each Redis
+command and Commons call is a step with its duration; a `serving stale cache entry`
+event on the request step means Commons was down and the cache answered.
 
 ## How it works
 

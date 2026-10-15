@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
 	"frise-chrono/back/internal/bc/imagery/domain"
 )
 
@@ -33,10 +35,15 @@ type Client struct {
 // NewClient returns a client calling the given API endpoint with the given User-Agent.
 func NewClient(endpoint, userAgent string) *Client {
 	return &Client{
-		httpClient: &http.Client{Timeout: callTimeout},
-		endpoint:   endpoint,
-		userAgent:  userAgent,
-		serial:     make(chan struct{}, 1),
+		httpClient: &http.Client{
+			Timeout: callTimeout,
+			Transport: otelhttp.NewTransport(http.DefaultTransport, otelhttp.WithSpanNameFormatter(
+				func(_ string, r *http.Request) string { return r.Method + " " + r.URL.Host },
+			)),
+		},
+		endpoint:  endpoint,
+		userAgent: userAgent,
+		serial:    make(chan struct{}, 1),
 	}
 }
 

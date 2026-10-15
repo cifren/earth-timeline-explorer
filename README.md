@@ -30,7 +30,7 @@ when missing). Docker's default address range collides with the VPN; set
 
 ```bash
 ./compose init          # create .env and the network, build the images, install dependencies
-./compose up            # start back, web and redis in the background
+./compose up            # start back, web, redis and jaeger in the background
 ```
 
 `./compose init` creates `.env` from `.env.example` when it does not exist yet; set a
@@ -41,6 +41,7 @@ contact in its `COMMONS_USER_AGENT`.
 | Web           | http://localhost:5173                |
 | API           | http://localhost:8080/api/v1         |
 | API reference | http://localhost:8080/api/docs       |
+| Traces        | http://localhost:16686               |
 
 Stop everything with `./compose down`.
 

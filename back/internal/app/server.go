@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	geographyinfra "frise-chrono/back/internal/bc/geography/infrastructure"
 	geography "frise-chrono/back/internal/bc/geography/presentation"
@@ -17,6 +19,7 @@ import (
 	imagery "frise-chrono/back/internal/bc/imagery/presentation"
 	"frise-chrono/back/internal/shared/cache"
 	"frise-chrono/back/internal/shared/problem"
+	"frise-chrono/back/internal/shared/telemetry"
 	"frise-chrono/back/var/apigen"
 )
 
@@ -39,8 +42,19 @@ type api struct {
 
 // Run serves the API until ctx is cancelled, then shuts down gracefully.
 func Run(ctx context.Context, config Config) error {
+	if config.TracesEnabled {
+		stopTracing, err := telemetry.StartTracing(ctx)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = stopTracing(context.Background()) }()
+	}
+
 	redisClient := redis.NewClient(&redis.Options{Addr: config.RedisAddr})
 	defer func() { _ = redisClient.Close() }()
+	if err := redisotel.InstrumentTracing(redisClient); err != nil {
+		return fmt.Errorf("redis tracing: %w", err)
+	}
 
 	handler, err := newHandler(config, commons.Endpoint, redisClient)
 	if err != nil {
@@ -108,7 +122,7 @@ func newHandler(config Config, commonsEndpoint string, redisClient *redis.Client
 	mux.HandleFunc("GET /api/openapi.json", openAPIDocument)
 	mux.HandleFunc("GET /api/docs", documentation)
 
-	return withRequestLog(withCORS(config.CORSAllowedOrigins, withRecovery(mux))), nil
+	return otelhttp.NewHandler(withRequestLog(withCORS(config.CORSAllowedOrigins, withRecovery(mux))), "api"), nil
 }
 
 func badRequest(w http.ResponseWriter, _ *http.Request, err error) {
