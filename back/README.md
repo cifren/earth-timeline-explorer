@@ -45,6 +45,7 @@ The contract `api/openapi.yaml` is the source of truth
 | GET    | `/api/v1/zones/geometry`            | Zone outlines (GeoJSON)                  |
 | GET    | `/api/v1/decades/{decade}/zones`    | Zones having photos for a decade         |
 | GET    | `/api/v1/images?zone=&decade=&limit=` | Random images of a zone and a decade   |
+| GET    | `/api/v1/images/{imageId}`            | An image drawn earlier, by its `id`    |
 | GET    | `/api/health`                       | Health check                             |
 
 Errors are Problem Details (RFC 9457).

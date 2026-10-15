@@ -93,7 +93,7 @@ func TestRandomPhotoMapsTheFile(t *testing.T) {
 	}
 	checks := map[string][2]string{
 		"title":          {image.Title, "Market day in Paris"},
-		"id":             {image.ID(), "wikimedia_commons:File:Market day in Paris.jpg"},
+		"id":             {image.ID(), "wikimedia_commons:France:File:Market day in Paris.jpg"},
 		"date":           {image.Time.Label, "3 April 1953"},
 		"zone":           {string(image.Location.Zone), string(zoning.Europe)},
 		"granularity":    {string(image.Location.Granularity), string(domain.GranularityPoint)},
@@ -102,6 +102,7 @@ func TestRandomPhotoMapsTheFile(t *testing.T) {
 		"authority":      {image.Certification.Authority, "Wikimedia Commons"},
 		"originalHolder": {image.Certification.OriginalHolder, "Nationaal Archief"},
 		"thumbnail":      {image.File.ThumbnailURL, "https://upload.wikimedia.org/market.jpg?width=1280"},
+		"display":        {image.File.DisplayURL, "https://upload.wikimedia.org/market.jpg?width=2560"},
 		"learnMore":      {image.LearnMore[0].URL, "https://en.wikipedia.org/wiki/History_of_France"},
 		"point":          {fmt.Sprint(*image.Location.Point), "{48.85 2.35}"},
 	}
@@ -156,5 +157,56 @@ func TestToLocationFallsBackOnTheCountry(t *testing.T) {
 
 	if guadeloupe := toLocation(page{}, zoning.LatinAmericaCaribbean, "Guadeloupe"); guadeloupe.Point != nil {
 		t.Fatalf("Guadeloupe located at %+v, want no point", *guadeloupe.Point)
+	}
+}
+
+func TestToImageDisplaysTheLargestBrowserRendition(t *testing.T) {
+	tests := []struct {
+		name string
+		info imageInfo
+		want string
+	}{
+		{
+			name: "double resolution rendition",
+			info: imageInfo{URL: "o.tif", ThumbURL: "t.jpg", ResponsiveURLs: map[string]string{"1.5": "m.jpg", "2": "l.jpg"}},
+			want: "l.jpg",
+		},
+		{name: "one and a half resolution only", info: imageInfo{URL: "o.tif", ThumbURL: "t.jpg", ResponsiveURLs: map[string]string{"1.5": "m.jpg"}}, want: "m.jpg"},
+		{name: "original smaller than the thumbnail", info: imageInfo{URL: "o.tif", ThumbURL: "t.jpg"}, want: "t.jpg"},
+		{name: "no rendition", info: imageInfo{URL: "o.jpg"}, want: "o.jpg"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			image, _ := toImage(page{Title: "File:Dam.tif", ImageInfo: []imageInfo{test.info}}, "Switzerland", timespan.Decade(1950))
+			if image.File.DisplayURL != test.want {
+				t.Fatalf("display URL = %q, want %q", image.File.DisplayURL, test.want)
+			}
+		})
+	}
+}
+
+func TestPhotoFetchesADrawnFileAgain(t *testing.T) {
+	fake := &commonstest.Fake{Files: map[string][]commonstest.File{"France": {{Title: "File:Market day in Paris.jpg", URL: "https://upload.wikimedia.org/market.jpg", Date: "1953"}}}}
+	source := NewPhotoSource(NewClient(fake.Start(t), userAgent))
+	tests := []struct {
+		name      string
+		reference domain.Reference
+		found     bool
+	}{
+		{name: "existing file", reference: domain.Reference{Source: "wikimedia_commons", Country: "France", SourceID: "File:Market day in Paris.jpg"}, found: true},
+		{name: "deleted file", reference: domain.Reference{Source: "wikimedia_commons", Country: "France", SourceID: "File:Gone.jpg"}, found: false},
+		{name: "other source", reference: domain.Reference{Source: "europeana", Country: "France", SourceID: "File:Market day in Paris.jpg"}, found: false},
+		{name: "not a file", reference: domain.Reference{Source: "wikimedia_commons", Country: "France", SourceID: "Category:Paris"}, found: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			image, found, err := source.Photo(context.Background(), test.reference, 1950)
+			if err != nil || found != test.found {
+				t.Fatalf("Photo = %v, %v, want found %v", found, err, test.found)
+			}
+			if found && image.ID() != "wikimedia_commons:France:File:Market day in Paris.jpg" {
+				t.Fatalf("image ID = %q", image.ID())
+			}
+		})
 	}
 }

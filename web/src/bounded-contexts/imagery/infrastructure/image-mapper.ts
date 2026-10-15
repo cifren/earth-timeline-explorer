@@ -14,7 +14,7 @@ export const toImage = (image: WireImage): Image => ({
   id: image.id,
   title: image.title,
   thumbnailUrl: image.file.thumbnailUrl,
-  originalUrl: image.file.originalUrl,
+  displayUrl: image.file.displayUrl,
   width: image.file.width,
   height: image.file.height,
   dateLabel: image.time.label,

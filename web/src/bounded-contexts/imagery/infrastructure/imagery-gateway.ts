@@ -1,4 +1,4 @@
-import { drawImages, listZonesWithImages } from '@api-client/imagery/imagery'
+import { drawImages, getImage, listZonesWithImages } from '@api-client/imagery/imagery'
 import { ZoneId } from '@api-client/model'
 import { ApiError } from '@shared/http/api-error'
 
@@ -10,7 +10,7 @@ const zoneIds: readonly string[] = Object.values(ZoneId)
 const isZoneId = (value: string): value is ZoneId => zoneIds.includes(value)
 
 /** Draws one random image of the zone and decade; null when none exists. */
-export const drawImage = async (zoneId: string, decade: number, signal: AbortSignal): Promise<Image | null> => {
+export const drawImage = async (zoneId: string, decade: number, signal?: AbortSignal): Promise<Image | null> => {
   if (!isZoneId(zoneId)) {
     throw new Error(`Unknown zone ${zoneId}`)
   }
@@ -20,6 +20,15 @@ export const drawImage = async (zoneId: string, decade: number, signal: AbortSig
   }
   const [image] = response.data.items
   return image === undefined ? null : toImage(image)
+}
+
+/** Fetches again a photo drawn earlier for the decade, from its identifier. */
+export const fetchImage = async (imageId: string, decade: number, signal: AbortSignal): Promise<Image> => {
+  const response = await getImage(encodeURIComponent(imageId), { decade }, { signal })
+  if (response.status !== 200) {
+    throw new ApiError(response.status, response.data)
+  }
+  return toImage(response.data)
 }
 
 export const fetchZonesWithImages = async (decade: number, signal: AbortSignal): Promise<string[]> => {

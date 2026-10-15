@@ -18,7 +18,7 @@ import type { Provenance } from './provenance';
 import type { TimeSpan } from './timeSpan';
 
 export interface Image {
-  /** Unique across sources, `<source>:<sourceId>`. */
+  /** Unique across sources and opaque to clients; fetches the image again through `GET /images/{imageId}`. */
   id: string;
   title: string;
   kind: ImageKind;

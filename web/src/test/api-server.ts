@@ -7,7 +7,10 @@ import { zoneGeometry } from './api-fixtures'
 
 export const API = 'http://api.test/api/v1'
 
-/** Fake back answering the zones and availability, and drawing the given images in turn. */
+/**
+ * Fake back answering the zones and availability, drawing the given images in turn, and
+ * fetching any of them again by identifier.
+ */
 export const startApi = (draws: Image[][]) => {
   const requests: URL[] = []
   const server = setupServer(
@@ -18,6 +21,12 @@ export const startApi = (draws: Image[][]) => {
     http.get(`${API}/images`, ({ request }) => {
       requests.push(new URL(request.url))
       return HttpResponse.json({ items: draws[requests.length - 1] ?? [] })
+    }),
+    http.get(`${API}/images/:imageId`, ({ params }) => {
+      const image = draws.flat().find(({ id }) => id === decodeURIComponent(String(params.imageId)))
+      return image
+        ? HttpResponse.json(image)
+        : HttpResponse.json({ type: 'about:blank', title: 'Not Found', status: 404 }, { status: 404 })
     }),
   )
   server.listen({ onUnhandledFrame: 'error' })

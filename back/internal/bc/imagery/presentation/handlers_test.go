@@ -63,7 +63,7 @@ func TestToAPIImage(t *testing.T) {
 
 	got := toAPIImage(image)
 
-	if got.Id != "wikimedia_commons:File:Harbour.jpg" || got.Location.Zone != "europe" || got.Time.Label != "1950s" {
+	if got.Id != "wikimedia_commons:France:File:Harbour.jpg" || got.Location.Zone != "europe" || got.Time.Label != "1950s" {
 		t.Fatalf("toAPIImage = %+v", got)
 	}
 	if got.Provenance.Author != nil || got.Certification.OriginalHolder != nil {

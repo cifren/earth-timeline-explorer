@@ -127,6 +127,43 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
 
+  /images/{imageId}:
+    get:
+      tags: [imagery]
+      operationId: getImage
+      summary: Fetch again an image drawn earlier
+      description: >-
+        Lets a drawn image be shared and reopened by its identifier, with the decade it was
+        drawn for.
+      parameters:
+        - name: imageId
+          in: path
+          required: true
+          description: The `id` of a drawn image.
+          schema:
+            type: string
+            example: "wikimedia_commons:France:File:Market day in Paris.jpg"
+        - name: decade
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Decade"
+      responses:
+        "200":
+          description: The image.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Image"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
 components:
   parameters:
     DecadePath:
@@ -304,8 +341,10 @@ components:
       properties:
         id:
           type: string
-          description: Unique across sources, `<source>:<sourceId>`.
-          example: "wikimedia_commons:File:Market day in Berlin, 1953.jpg"
+          description: >-
+            Unique across sources and opaque to clients; fetches the image again through
+            `GET /images/{imageId}`.
+          example: "wikimedia_commons:Germany:File:Market day in Berlin, 1953.jpg"
         title:
           type: string
           example: Market day in Berlin
@@ -340,16 +379,22 @@ components:
 
     ImageFile:
       type: object
-      required: [thumbnailUrl, originalUrl, width, height]
+      required: [thumbnailUrl, displayUrl, originalUrl, width, height]
       properties:
         thumbnailUrl:
           type: string
           format: uri
-          description: Resized image for panels and lists.
+          description: Resized image for panels and lists, about 1280 pixels wide.
+        displayUrl:
+          type: string
+          format: uri
+          description: >-
+            Large image for the full-screen viewer, up to about 2560 pixels wide, in a
+            format every browser shows.
         originalUrl:
           type: string
           format: uri
-          description: Full-resolution image for the full-screen viewer.
+          description: Original file, possibly heavy or in a format browsers cannot show (TIFF).
         width:
           type: integer
           description: Width of the original, in pixels.

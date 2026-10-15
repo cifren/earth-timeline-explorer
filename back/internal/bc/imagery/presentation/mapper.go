@@ -12,6 +12,7 @@ func toAPIImage(image domain.Image) apigen.Image {
 		Kind:  apigen.ImageKind(image.Kind),
 		File: apigen.ImageFile{
 			ThumbnailUrl: image.File.ThumbnailURL,
+			DisplayUrl:   image.File.DisplayURL,
 			OriginalUrl:  image.File.OriginalURL,
 			Width:        image.File.Width,
 			Height:       image.File.Height,

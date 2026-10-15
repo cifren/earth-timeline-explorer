@@ -8,6 +8,7 @@ describe('toImage', () => {
     expect(image).toMatchObject({
       title: 'Market day in Paris',
       thumbnailUrl: 'https://upload.wikimedia.org/thumb/Market day in Paris.jpg',
+      displayUrl: 'https://upload.wikimedia.org/large/Market day in Paris.jpg',
       dateLabel: '3 April 1953',
       zoneId: 'europe',
       position: { longitude: 2.3522, latitude: 48.8566, precise: true },

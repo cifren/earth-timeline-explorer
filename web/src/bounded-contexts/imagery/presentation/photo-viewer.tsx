@@ -1,10 +1,14 @@
+import { XIcon } from 'lucide-react'
 import { type MouseEvent, type PointerEvent, type WheelEvent, useEffect, useRef, useState } from 'react'
 
 import { cn } from 'cn'
 import { Button } from '@shared/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@shared/ui/dialog'
+import { Skeleton } from '@shared/ui/skeleton'
+import { useImageLoading } from '@shared/ui/use-image-loading'
 
 import type { Image } from '../domain/image'
+import { RenewButton } from './renew-button'
 import { type Point, type Size, fitView, isZoomed, panBy, zoomAt, zoomLevel } from './zoom-pan'
 
 const WHEEL_FACTOR = 1.2
@@ -15,17 +19,30 @@ const windowSize = (): Size => ({ width: window.innerWidth, height: window.inner
 
 type PhotoViewerProps = {
   image: Image
+  isDrawing: boolean
+  onRenew: () => void
   onClose: () => void
 }
 
-/** Full-screen photo with zoom (wheel, buttons, double click) and pan when zoomed. */
-export const PhotoViewer = ({ image, onClose }: PhotoViewerProps) => {
+/**
+ * Full-screen photo with zoom (wheel, buttons, double click) and pan when zoomed. Renew
+ * draws the next photo in place, shown fitted to the screen.
+ */
+export const PhotoViewer = ({ image, isDrawing, onRenew, onClose }: PhotoViewerProps) => {
   const size: Size = { width: image.width, height: image.height }
   const [frame, setFrame] = useState(windowSize)
   const [view, setView] = useState(() => fitView(size, frame))
   const [animate, setAnimate] = useState(false)
+  const [shownImageId, setShownImageId] = useState(image.id)
   const dragRef = useRef<Point | null>(null)
   const zoomed = isZoomed(view, size, frame)
+  const { loading, settle } = useImageLoading(image.displayUrl)
+
+  if (shownImageId !== image.id) {
+    setShownImageId(image.id)
+    setAnimate(false)
+    setView(fitView(size, frame))
+  }
 
   useEffect(() => {
     const resize = () => {
@@ -85,20 +102,44 @@ export const PhotoViewer = ({ image, onClose }: PhotoViewerProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent
         aria-describedby={undefined}
+        showCloseButton={false}
         className="top-0 left-0 block h-screen w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 bg-night/95 p-0 text-night-foreground shadow-none sm:max-w-none"
         onWheel={handleWheel}
         onClick={handleBackdropClick}
       >
-        <DialogTitle className="absolute top-4 left-5 text-sm font-normal">{image.title}</DialogTitle>
+        <DialogTitle className="absolute top-4 left-4 z-10 max-w-[calc(100%-6rem)] truncate rounded-lg bg-night/90 px-3.5 py-2 text-base font-semibold shadow-lg ring-1 ring-night-foreground/30">
+          {image.title}
+        </DialogTitle>
+        <DialogClose asChild>
+          <Button
+            variant="secondary"
+            size="icon-lg"
+            aria-label="Close"
+            className="absolute top-4 right-4 z-10 rounded-full shadow-lg ring-2 ring-night-foreground/70 hover:scale-105 [&_svg:not([class*='size-'])]:size-6"
+          >
+            <XIcon />
+          </Button>
+        </DialogClose>
+        {loading && (
+          <Skeleton
+            data-testid="viewer-skeleton"
+            className="absolute rounded-none bg-night-foreground/15"
+            style={{ left: view.x, top: view.y, width: size.width * view.scale, height: size.height * view.scale }}
+          />
+        )}
         <img
-          src={image.originalUrl}
+          src={image.displayUrl}
           alt={image.title}
           draggable={false}
           className={cn(
             'absolute top-0 left-0 max-w-none origin-top-left shadow-2xl select-none',
             zoomed ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in',
             animate && 'transition-transform duration-200 ease-out',
+            loading && 'opacity-0',
           )}
+          aria-busy={loading}
+          onLoad={settle}
+          onError={settle}
           style={{
             width: image.width,
             height: image.height,
@@ -129,6 +170,8 @@ export const PhotoViewer = ({ image, onClose }: PhotoViewerProps) => {
           <Button variant="secondary" size="sm" onClick={fit}>
             Fit
           </Button>
+          <span className="mx-1 h-6 w-px bg-night-foreground/30" aria-hidden />
+          <RenewButton size="sm" disabled={isDrawing} onClick={onRenew} />
         </div>
       </DialogContent>
     </Dialog>

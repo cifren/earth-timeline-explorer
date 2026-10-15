@@ -12,6 +12,8 @@
 import type {
   DecadeAvailability,
   DrawImagesParams,
+  GetImageParams,
+  Image,
   ImageList,
   ProblemResponse
 } from '../model';
@@ -128,6 +130,73 @@ export const getDrawImagesUrl = (params: DrawImagesParams,) => {
 export const drawImages = async (params: DrawImagesParams, options?: Parameters<typeof fetchApi>[1]): Promise<drawImagesResponse> => {
 
   return fetchApi<drawImagesResponse>(getDrawImagesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+export type getImageResponse200 = {
+  data: Image
+  status: 200
+}
+
+export type getImageResponse400 = {
+  data: ProblemResponse
+  status: 400
+}
+
+export type getImageResponse404 = {
+  data: ProblemResponse
+  status: 404
+}
+
+export type getImageResponse503 = {
+  data: ProblemResponse
+  status: 503
+}
+
+export type getImageResponseDefault = {
+  data: ProblemResponse
+  status: Exclude<HTTPStatusCodes, 200 | 400 | 404 | 503>
+}
+
+export type getImageResponseSuccess = (getImageResponse200) & {
+  headers: Headers;
+};
+export type getImageResponseError = (getImageResponse400 | getImageResponse404 | getImageResponse503 | getImageResponseDefault) & {
+  headers: Headers;
+};
+
+export type getImageResponse = (getImageResponseSuccess | getImageResponseError)
+
+export const getGetImageUrl = (imageId: string,
+    params: GetImageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/images/${imageId}?${stringifiedParams}` : `/api/v1/images/${imageId}`
+}
+
+/**
+ * Lets a drawn image be shared and reopened by its identifier, with the decade it was drawn for.
+ * @summary Fetch again an image drawn earlier
+ */
+export const getImage = async (imageId: string,
+    params: GetImageParams, options?: Parameters<typeof fetchApi>[1]): Promise<getImageResponse> => {
+
+  return fetchApi<getImageResponse>(getGetImageUrl(imageId,params),
   {
     ...options,
     method: 'GET'

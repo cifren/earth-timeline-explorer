@@ -3,6 +3,8 @@ package domain
 
 import (
 	"errors"
+	"slices"
+	"strings"
 	"time"
 
 	"frise-chrono/back/internal/core/timespan"
@@ -45,17 +47,37 @@ type Image struct {
 	LearnMore     []Link
 }
 
-// ID identifies an image across sources.
+// ID identifies an image across sources and holds what is needed to fetch it again: its
+// source, its country and its identifier at the source, e.g.
+// "wikimedia_commons:France:File:Market day.jpg".
 func (i Image) ID() string {
-	return i.Provenance.Source + ":" + i.Provenance.SourceID
+	return strings.Join([]string{i.Provenance.Source, i.Location.Country, i.Provenance.SourceID}, ":")
+}
+
+// Reference is an image identifier split into its parts.
+type Reference struct {
+	Source   string
+	Country  string
+	SourceID string
+}
+
+// ParseID splits an image identifier built by Image.ID.
+func ParseID(id string) (Reference, bool) {
+	parts := strings.SplitN(id, ":", 3)
+	if len(parts) != 3 || slices.Contains(parts, "") {
+		return Reference{}, false
+	}
+	return Reference{Source: parts[0], Country: parts[1], SourceID: parts[2]}, true
 }
 
 // File locates the image files at their source.
 type File struct {
 	ThumbnailURL string
-	OriginalURL  string
-	Width        int
-	Height       int
+	// DisplayURL is a large rendition, in a format browsers show, for full-screen viewing.
+	DisplayURL  string
+	OriginalURL string
+	Width       int
+	Height      int
 }
 
 // Location is where the image was taken. The country is internal: clients see the zone.

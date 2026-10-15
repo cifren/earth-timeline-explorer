@@ -62,6 +62,7 @@ func toImage(p page, country string, decade timespan.Decade) (domain.Image, bool
 		Kind:  domain.KindPhotograph,
 		File: domain.File{
 			ThumbnailURL: firstNonEmpty(info.ThumbURL, info.URL),
+			DisplayURL:   firstNonEmpty(info.ResponsiveURLs["2"], info.ResponsiveURLs["1.5"], info.ThumbURL, info.URL),
 			OriginalURL:  info.URL,
 			Width:        info.Width,
 			Height:       info.Height,

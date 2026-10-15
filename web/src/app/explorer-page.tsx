@@ -1,14 +1,13 @@
 import { Timeline } from '@bc/chronology'
 import { WorldMap, useGeography } from '@bc/geography'
 import { PhotoPanel, useImagery } from '@bc/imagery'
-import { useSelection } from '@core/selection/selection-store'
+import { useSelection } from '@core/selection/use-selection'
 
 /** Map, timeline and photo panel: the whole v0 experience on one screen. */
 export const ExplorerPage = () => {
   const { outlines, isError, zoneName } = useGeography()
   const { zoneId, decade, image, availableZoneIds } = useImagery()
-  const selectZone = useSelection((state) => state.selectZone)
-  const selectDecade = useSelection((state) => state.selectDecade)
+  const { selectZone, selectDecade } = useSelection()
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">

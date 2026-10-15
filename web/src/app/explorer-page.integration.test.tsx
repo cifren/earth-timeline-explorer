@@ -1,10 +1,9 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import type { SetupServer } from 'msw/node'
-
-import { INITIAL_DECADE, useSelection } from '@core/selection/selection-store'
+import { RouterProvider, createMemoryRouter } from 'react-router'
 
 import { wireImage } from '../test/api-fixtures'
 import { API, startApi } from '../test/api-server'
@@ -13,25 +12,22 @@ import { createQueryClient } from './query-client'
 
 let server: SetupServer | undefined
 
-const renderPage = (draws: Parameters<typeof startApi>[0]) => {
+const renderPage = (draws: Parameters<typeof startApi>[0], url = '/') => {
   const api = startApi(draws)
   server = api.server
+  const router = createMemoryRouter([{ path: '/', element: <ExplorerPage /> }], { initialEntries: [url] })
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <ExplorerPage />
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   )
-  return api
+  return { ...api, router }
 }
 
 const selectZone = async (name: string) => {
   await userEvent.click(await screen.findByRole('button', { name }))
   return screen.findByRole('dialog')
 }
-
-beforeEach(() => {
-  useSelection.setState({ zoneId: null, decade: INITIAL_DECADE })
-})
 
 afterEach(() => {
   server?.close()
@@ -61,6 +57,60 @@ describe('Explorer page', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Renew' }))
 
     expect(await within(panel).findByText('Rotterdam harbour')).toBeInTheDocument()
+  })
+
+  it('chains photos from the full-screen viewer', async () => {
+    renderPage([[wireImage('Market day in Paris', '3 April 1953')], [wireImage('Rotterdam harbour', 'around 1958')]])
+    const panel = await selectZone('Europe')
+    await userEvent.click(await within(panel).findByTitle('Click to enlarge'))
+    const viewer = await screen.findByRole('dialog', { name: 'Market day in Paris' })
+    const photo = within(viewer).getByRole('img', { name: 'Market day in Paris' })
+    expect(photo).toHaveAttribute('src', 'https://upload.wikimedia.org/large/Market day in Paris.jpg')
+    expect(within(viewer).getByTestId('viewer-skeleton')).toBeInTheDocument()
+    fireEvent.load(photo)
+    expect(within(viewer).queryByTestId('viewer-skeleton')).not.toBeInTheDocument()
+
+    await userEvent.click(within(viewer).getByRole('button', { name: 'Renew' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Rotterdam harbour' })).toBeInTheDocument()
+  })
+
+  it('gives each photo its own address', async () => {
+    const paris = wireImage('Market day in Paris', '3 April 1953')
+    const { router } = renderPage([[paris]])
+
+    await within(await selectZone('Europe')).findByText('Market day in Paris')
+
+    expect(Object.fromEntries(new URLSearchParams(router.state.location.search))).toEqual({
+      decade: '1950',
+      zone: 'europe',
+      image: paris.id,
+    })
+  })
+
+  it('opens the photo of a shared address without drawing', async () => {
+    const paris = wireImage('Market day in Paris', '3 April 1953')
+    const { requests } = renderPage([[paris]], `/?decade=1950&zone=europe&image=${encodeURIComponent(paris.id)}`)
+
+    const panel = await screen.findByRole('dialog')
+
+    expect(await within(panel).findByText('Market day in Paris')).toBeInTheDocument()
+    expect(requests).toHaveLength(0)
+  })
+
+  it('goes back to the previous photo with the browser history', async () => {
+    const { router } = renderPage([
+      [wireImage('Market day in Paris', '3 April 1953')],
+      [wireImage('Rotterdam harbour', 'around 1958')],
+    ])
+    const panel = await selectZone('Europe')
+    await within(panel).findByText('Market day in Paris')
+    await userEvent.click(within(panel).getByRole('button', { name: 'Renew' }))
+    await within(panel).findByText('Rotterdam harbour')
+
+    await act(() => router.navigate(-1))
+
+    expect(await within(panel).findByText('Market day in Paris')).toBeInTheDocument()
   })
 
   it('draws again for the same zone when the decade changes', async () => {

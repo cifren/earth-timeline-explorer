@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
@@ -130,6 +131,22 @@ func TestDrawImages(t *testing.T) {
 	}
 	if !labels["3 April 1953"] || !labels["around 1958"] {
 		t.Fatalf("date labels = %v", labels)
+	}
+}
+
+func TestGetImageFetchesADrawnImageAgain(t *testing.T) {
+	server := startAPI(t, europe1950())
+	_, drawn := get(t, server, "/api/v1/images?zone=europe&decade=1950", nil)
+	id := drawn["items"].([]any)[0].(map[string]any)["id"].(string)
+
+	response, body := get(t, server, "/api/v1/images/"+url.PathEscape(id)+"?decade=1950", nil)
+
+	if response.StatusCode != http.StatusOK || body["id"] != id {
+		t.Fatalf("GET /images/{id}: %d %v", response.StatusCode, body)
+	}
+	response, _ = get(t, server, "/api/v1/images/"+url.PathEscape("wikimedia_commons:France:File:Gone.jpg")+"?decade=1950", nil)
+	if response.StatusCode != http.StatusNotFound || response.Header.Get("Content-Type") != "application/problem+json" {
+		t.Fatalf("unknown image: %d %q, want a 404 problem", response.StatusCode, response.Header.Get("Content-Type"))
 	}
 }
 

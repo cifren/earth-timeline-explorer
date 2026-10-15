@@ -8,7 +8,8 @@ export type Image = {
   id: string
   title: string
   thumbnailUrl: string
-  originalUrl: string
+  /** Large rendition for full-screen viewing, in a format browsers show. */
+  displayUrl: string
   width: number
   height: number
   dateLabel: string

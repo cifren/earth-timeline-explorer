@@ -18,6 +18,7 @@ import (
 const (
 	availabilityCacheControl = "public, max-age=3600"
 	defaultLimit             = 1
+	unavailableDetail        = "Photos are temporarily unavailable."
 )
 
 // Handlers implements the imagery operations of the API.
@@ -41,7 +42,7 @@ func (h *Handlers) ListZonesWithImages(ctx context.Context, request apigen.ListZ
 
 	zones, err := h.drawer.ZonesWithImages(ctx, decade)
 	if errors.Is(err, domain.ErrSourceUnavailable) {
-		return apigen.ListZonesWithImages503ApplicationProblemPlusJSONResponse(problem.New(http.StatusServiceUnavailable, "Photos are temporarily unavailable.")), nil
+		return apigen.ListZonesWithImages503ApplicationProblemPlusJSONResponse(problem.New(http.StatusServiceUnavailable, unavailableDetail)), nil
 	}
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (h *Handlers) DrawImages(ctx context.Context, request apigen.DrawImagesRequ
 
 	images, err := h.drawer.Draw(ctx, zone.ID, decade, limit)
 	if errors.Is(err, domain.ErrSourceUnavailable) {
-		return apigen.DrawImages503ApplicationProblemPlusJSONResponse(problem.New(http.StatusServiceUnavailable, "Photos are temporarily unavailable.")), nil
+		return apigen.DrawImages503ApplicationProblemPlusJSONResponse(problem.New(http.StatusServiceUnavailable, unavailableDetail)), nil
 	}
 	if err != nil {
 		return nil, err
@@ -89,6 +90,28 @@ func (h *Handlers) DrawImages(ctx context.Context, request apigen.DrawImagesRequ
 		items = append(items, toAPIImage(image))
 	}
 	return apigen.DrawImages200JSONResponse{Items: items}, nil
+}
+
+// GetImage implements GET /images/{imageId}.
+func (h *Handlers) GetImage(ctx context.Context, request apigen.GetImageRequestObject) (apigen.GetImageResponseObject, error) {
+	decade, err := timespan.NewDecade(request.Params.Decade, time.Now())
+	if err != nil {
+		return apigen.GetImage400ApplicationProblemPlusJSONResponse{
+			ProblemApplicationProblemPlusJSONResponse: apigen.ProblemApplicationProblemPlusJSONResponse(problem.New(http.StatusBadRequest, err.Error())),
+		}, nil
+	}
+
+	image, found, err := h.drawer.Image(ctx, request.ImageId, decade)
+	if errors.Is(err, domain.ErrSourceUnavailable) {
+		return apigen.GetImage503ApplicationProblemPlusJSONResponse(problem.New(http.StatusServiceUnavailable, unavailableDetail)), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return apigen.GetImage404ApplicationProblemPlusJSONResponse(problem.New(http.StatusNotFound, "No image has this identifier.")), nil
+	}
+	return apigen.GetImage200JSONResponse(toAPIImage(image)), nil
 }
 
 func badDrawRequest(detail string) apigen.DrawImages400ApplicationProblemPlusJSONResponse {

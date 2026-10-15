@@ -1,12 +1,12 @@
 import { Suspense, lazy, useState } from 'react'
 
-import { Button } from '@shared/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@shared/ui/sheet'
 import { Skeleton } from '@shared/ui/skeleton'
 
 import { useImagery } from '../application/use-imagery'
 import type { Image } from '../domain/image'
 import { PhotoDetails } from './photo-details'
+import { RenewButton } from './renew-button'
 
 const PhotoViewer = lazy(() => import('./photo-viewer').then((module) => ({ default: module.PhotoViewer })))
 
@@ -83,17 +83,11 @@ export const PhotoPanel = ({ zoneName }: PhotoPanelProps) => {
           />
         </div>
         <SheetFooter className="border-t">
-          <Button
-            className="bg-highlight text-primary-foreground hover:bg-highlight-strong"
-            disabled={isDrawing || image === null}
-            onClick={renew}
-          >
-            Renew
-          </Button>
+          <RenewButton disabled={isDrawing || image === null} onClick={renew} />
         </SheetFooter>
         {enlarged && image && (
           <Suspense>
-            <PhotoViewer image={image} onClose={() => setEnlarged(false)} />
+            <PhotoViewer image={image} isDrawing={isDrawing} onRenew={renew} onClose={() => setEnlarged(false)} />
           </Suspense>
         )}
       </SheetContent>

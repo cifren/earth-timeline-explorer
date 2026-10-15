@@ -1,14 +1,14 @@
-import { type ComponentProps, useState } from 'react'
+import { type ComponentProps } from 'react'
 
 import { cn } from 'cn'
 import { Skeleton } from '@shared/ui/skeleton'
+import { useImageLoading } from '@shared/ui/use-image-loading'
 
 type LoadingImageProps = ComponentProps<'img'> & { src: string; alt: string }
 
 /** Image covered by a skeleton until its file is loaded (or has failed), for each new source. */
 export const LoadingImage = ({ src, alt, className, onLoad, onError, ...props }: LoadingImageProps) => {
-  const [settledSrc, setSettledSrc] = useState<string | null>(null)
-  const loading = settledSrc !== src
+  const { loading, settle } = useImageLoading(src)
 
   return (
     <span className="relative block">
@@ -20,11 +20,11 @@ export const LoadingImage = ({ src, alt, className, onLoad, onError, ...props }:
         aria-busy={loading}
         className={cn(className, loading && 'opacity-0')}
         onLoad={(event) => {
-          setSettledSrc(src)
+          settle()
           onLoad?.(event)
         }}
         onError={(event) => {
-          setSettledSrc(src)
+          settle()
           onError?.(event)
         }}
       />

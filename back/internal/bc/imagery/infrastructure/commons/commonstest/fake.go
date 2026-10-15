@@ -78,7 +78,23 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		f.serveCategories(w, query.Get("cmtitle"))
 		return
 	}
+	if query.Has("titles") {
+		f.serveTitle(w, query.Get("titles"))
+		return
+	}
 	f.serveSearch(w, query.Get("gsrsearch"))
+}
+
+func (f *Fake) serveTitle(w http.ResponseWriter, title string) {
+	for _, files := range f.Files {
+		for _, file := range files {
+			if file.Title == title {
+				_ = json.NewEncoder(w).Encode(map[string]any{"query": map[string]any{"pages": []any{page(file)}}})
+				return
+			}
+		}
+	}
+	_ = json.NewEncoder(w).Encode(map[string]any{"query": map[string]any{"pages": []any{map[string]any{"title": title, "missing": true}}}})
 }
 
 func (f *Fake) serveCategories(w http.ResponseWriter, title string) {
@@ -111,6 +127,7 @@ func page(file File) map[string]any {
 		"imageinfo": []map[string]any{{
 			"url":            file.URL,
 			"thumburl":       file.URL + "?width=1280",
+			"responsiveUrls": map[string]string{"1.5": file.URL + "?width=1920", "2": file.URL + "?width=2560"},
 			"descriptionurl": "https://commons.wikimedia.org/wiki/" + file.Title,
 			"width":          4000,
 			"height":         3000,

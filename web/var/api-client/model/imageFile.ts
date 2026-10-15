@@ -11,9 +11,11 @@
  */
 
 export interface ImageFile {
-  /** Resized image for panels and lists. */
+  /** Resized image for panels and lists, about 1280 pixels wide. */
   thumbnailUrl: string;
-  /** Full-resolution image for the full-screen viewer. */
+  /** Large image for the full-screen viewer, up to about 2560 pixels wide, in a format every browser shows. */
+  displayUrl: string;
+  /** Original file, possibly heavy or in a format browsers cannot show (TIFF). */
   originalUrl: string;
   /** Width of the original, in pixels. */
   width: number;

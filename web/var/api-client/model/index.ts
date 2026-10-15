@@ -15,6 +15,7 @@ export * from './certificationLevel';
 export * from './decade';
 export * from './decadeAvailability';
 export * from './drawImagesParams';
+export * from './getImageParams';
 export * from './image';
 export * from './imageFile';
 export * from './imageKind';

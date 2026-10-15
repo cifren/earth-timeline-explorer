@@ -74,6 +74,16 @@ func (d *Drawer) Draw(ctx context.Context, zone zoning.ID, decade timespan.Decad
 	return images, nil
 }
 
+// Image fetches again an image drawn for the decade, from its identifier. It reports false
+// when the identifier is malformed or the image no longer exists at its source.
+func (d *Drawer) Image(ctx context.Context, id string, decade timespan.Decade) (domain.Image, bool, error) {
+	reference, valid := domain.ParseID(id)
+	if !valid {
+		return domain.Image{}, false, nil
+	}
+	return d.photos.Photo(ctx, reference, decade)
+}
+
 func countriesIn(ctx context.Context, zone zoning.ID, countries []string) []string {
 	var inZone []string
 	for _, country := range countries {

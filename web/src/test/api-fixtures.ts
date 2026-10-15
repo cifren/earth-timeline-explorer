@@ -34,6 +34,7 @@ export const wireImage = (title: string, dateLabel: string): Image => ({
   kind: 'photograph',
   file: {
     thumbnailUrl: `https://upload.wikimedia.org/thumb/${title}.jpg`,
+    displayUrl: `https://upload.wikimedia.org/large/${title}.jpg`,
     originalUrl: `https://upload.wikimedia.org/${title}.jpg`,
     width: 1600,
     height: 1200,
