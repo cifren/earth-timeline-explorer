@@ -15,7 +15,7 @@ services:
       GOPATH: /app/.cache/go
       HTTP_ADDR: ":8080"
       REDIS_ADDR: "redis:6379"
-      COMMONS_USER_AGENT: "${COMMONS_USER_AGENT:-FriseChrono/0.1 (development)}"
+      COMMONS_USER_AGENT: "${COMMONS_USER_AGENT:-FriseChrono/0.1 (https://github.com/cifren/earth-timeline-explorer)}"
       CORS_ALLOWED_ORIGINS: "http://localhost:5173"
     ports:
       - "8080:8080"
