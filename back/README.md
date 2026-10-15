@@ -27,9 +27,12 @@ Run with `./compose make back <target>`:
 | `install` | Download the Go modules                                    |
 | `run`     | Run the server with live reload (default command of the container) |
 | `build`   | Build the server binary into `bin/`                        |
+| `test`    | Unit tests: no network, Commons and Redis faked in-process |
+| `test-integration` | Unit and integration tests: the real API on the Redis of the stack, Commons faked |
 | `lint`    | Lint, check formatting and architecture boundaries         |
 | `format`  | Format the code                                            |
 | `api`     | Regenerate the server code from `api/openapi.yaml`         |
+| `zones`   | Regenerate the zone outlines from Natural Earth (needs network) |
 
 ## API
 
@@ -61,30 +64,34 @@ Environment variables, set in `docker-compose.yml`:
 | `COMMONS_USER_AGENT`   | yes      | Identifying User-Agent sent to Wikimedia Commons     |
 | `CORS_ALLOWED_ORIGINS` | no       | Comma-separated browser origins allowed to call the API |
 
-## Code layout
+## How it works
 
-Simplified DDD ([ADR common 0004](../docs/adr-common/0004-bounded-contexts-and-clean-layers.md),
-[ADR back core 0001](docs/adr-core/0001-go-layout-for-contexts-and-layers.md)):
+**Example — drawing a photo of Europe in the 1950s** (`GET /api/v1/images?zone=europe&decade=1950`):
 
-```
-api/                    API contract and code generation configuration
-cmd/server/             HTTP service entry point
-internal/
-├── app/                composition root: configuration, wiring, HTTP server
-├── bc/
-│   ├── geography/      zones and their outlines
-│   └── imagery/        images, Commons gateway, random draw
-├── core/
-│   ├── timespan/       decades, EDTF dates and plain English labels
-│   └── zoning/         zones and the country → zone table
-└── shared/
-    ├── apigen/         code generated from the contract (never edited)
-    ├── cache/          Redis cache with stale-on-error
-    └── problem/        Problem Details responses
-```
+1. The request is checked: the decade must be on the timeline (1840 to the current
+   decade, multiple of 10) and the zone must exist; otherwise the answer is a `400`
+   Problem Details.
+2. The back lists the countries having a `1950s photographs of <country>` category on
+   Wikimedia Commons, keeps those placed in Europe (France, the Netherlands, the Soviet
+   Union…) and draws one at random. This list is cached in Redis for 7 days and still
+   served if Commons is down.
+3. It asks Commons for a random file in that country's category tree. A missing file
+   triggers a new draw, up to 3 attempts.
+4. The file's free-text date ("Taken in 1953", "circa 1955", "03/04/1953") becomes a
+   time span: an EDTF value (`1953-04-03`) and a plain English label ("3 April 1953");
+   an unreadable date or one outside the decade falls back to the decade ("1950s").
+5. The answer carries the image URLs on Wikimedia's servers, the zone, the source,
+   license and author, and a "Learn more" link to Wikipedia.
 
-Inside each context: `domain` → `infrastructure` → `application` → `presentation`.
-Contexts never import each other; `make lint` enforces these boundaries.
+**Zone outlines** are not computed at runtime: `make zones` downloads country borders
+from Natural Earth, merges them zone by zone and generates a Go package compiled into
+the binary.
+
+**Organisation**: the code follows a simplified DDD. Each business area (zones, images)
+is a bounded context that never imports another; concepts shared by several contexts
+(zones, decades) live apart; inside a context, the business model knows nothing of HTTP,
+Redis or Commons. Generated code (server interfaces, zone outlines) lives in `var/` and
+is never edited. The rules are in the [ADRs](#decisions) and checked by `make lint`.
 
 ## Production image
 
