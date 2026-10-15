@@ -1,0 +1,5 @@
+dist
+var
+.cache
+package-lock.json
+*.md

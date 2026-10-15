@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "compilerOptions": {
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@bc/*": ["./src/bounded-contexts/*/index.ts"],
+      "@core/*": ["./src/core/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@api-client/*": ["./var/api-client/*"]
+    }
+  }
+}

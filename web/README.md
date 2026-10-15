@@ -25,7 +25,9 @@ Run with `./compose make web <target>`:
 | `help`    | List the commands                                          |
 | `install` | Install the npm dependencies                               |
 | `dev`     | Run the development server (default command of the container) |
-| `build`   | Build the static bundle into `dist/`                       |
+| `build`   | Type-check and build the static bundle into `dist/`        |
+| `test`    | Unit tests: mappers, components, pure functions            |
+| `test-integration` | Integration tests: the page driven like a user, the API faked with Mock Service Worker |
 | `lint`    | ESLint and Prettier check, including architecture boundaries |
 | `format`  | Format the code with Prettier                              |
 | `api`     | Regenerate the API client from `../back/api/openapi.yaml`  |

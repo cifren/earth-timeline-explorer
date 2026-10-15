@@ -23,3 +23,6 @@ formatter and a boundary checker.
 
 - `make lint` is the single quality gate of the web.
 - Accessibility smells are caught as early as type errors.
+- ESLint follows the newest major supported by every preset: `eslint-plugin-jsx-a11y`
+  holds it on ESLint 9.
+- Boundaries resolve the path aliases through `eslint-import-resolver-typescript`.
