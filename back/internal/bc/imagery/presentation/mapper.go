@@ -6,10 +6,6 @@ import (
 )
 
 func toAPIImage(image domain.Image) apigen.Image {
-	links := make([]apigen.Link, 0, len(image.LearnMore))
-	for _, link := range image.LearnMore {
-		links = append(links, apigen.Link{Label: link.Label, Url: link.URL})
-	}
 	return apigen.Image{
 		Id:    image.ID(),
 		Title: image.Title,
@@ -24,6 +20,8 @@ func toAPIImage(image domain.Image) apigen.Image {
 		Location: apigen.Location{
 			Zone:        apigen.ZoneId(image.Location.Zone),
 			Granularity: apigen.LocationGranularity(image.Location.Granularity),
+			Point:       toAPIPoint(image.Location.Point),
+			MapLinks:    toAPILinks(image.Location.MapLinks()),
 		},
 		Certification: apigen.Certification{
 			Level:          apigen.CertificationLevel(image.Certification.Level),
@@ -38,8 +36,23 @@ func toAPIImage(image domain.Image) apigen.Image {
 			Author:      optional(image.Provenance.Author),
 			RetrievedAt: image.Provenance.RetrievedAt,
 		},
-		LearnMore: links,
+		LearnMore: toAPILinks(image.LearnMore),
 	}
+}
+
+func toAPIPoint(point *domain.Point) *apigen.Point {
+	if point == nil {
+		return nil
+	}
+	return &apigen.Point{Type: apigen.PointTypePoint, Coordinates: []float64{point.Longitude, point.Latitude}}
+}
+
+func toAPILinks(links []domain.Link) []apigen.Link {
+	result := make([]apigen.Link, 0, len(links))
+	for _, link := range links {
+		result = append(result, apigen.Link{Label: link.Label, Url: link.URL})
+	}
+	return result
 }
 
 func optional(value string) *string {

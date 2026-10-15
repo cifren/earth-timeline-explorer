@@ -1,4 +1,6 @@
-import { isDimmed, zoneStyle } from './zone-style'
+import type Circle from 'ol/style/Circle'
+
+import { isDimmed, markerStyle, zoneStyle } from './zone-style'
 
 const state = { availableZoneIds: new Set(['europe']), selectedZoneId: null, hoveredZoneId: null }
 
@@ -21,5 +23,14 @@ describe('zoneStyle', () => {
 
     expect(stroke?.getColor()).toBe('#a0461c')
     expect(stroke?.getWidth()).toBe(3)
+  })
+})
+
+describe('markerStyle', () => {
+  it('draws a larger dot and halo when only the country is known', () => {
+    const radii = (precise: boolean) => markerStyle(precise).map((style) => (style.getImage() as Circle).getRadius())
+
+    expect(radii(false)[0]).toBeGreaterThan(radii(true)[0] ?? 0)
+    expect(radii(false)[1]).toBeGreaterThan(radii(true)[1] ?? 0)
   })
 })

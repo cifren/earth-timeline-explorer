@@ -1,4 +1,4 @@
-// Command zones regenerates the zone outlines from Natural Earth country borders.
+// Command zones regenerates the zone outlines and country points from Natural Earth.
 // Run it from the back module root: `go run ./cmd/zones`.
 package main
 

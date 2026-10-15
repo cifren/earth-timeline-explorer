@@ -23,6 +23,33 @@ func TestAllReturnsACopy(t *testing.T) {
 	}
 }
 
+func TestPointOfCountry(t *testing.T) {
+	tests := []struct {
+		country string
+		found   bool
+	}{
+		{country: "Denmark", found: true},
+		{country: "the Soviet Union", found: true},
+		{country: "Guadeloupe", found: false},
+		{country: "Atlantis", found: false},
+	}
+	for _, test := range tests {
+		t.Run(test.country, func(t *testing.T) {
+			if _, found := PointOfCountry(test.country); found != test.found {
+				t.Fatalf("PointOfCountry(%q) found = %v, want %v", test.country, found, test.found)
+			}
+		})
+	}
+}
+
+func TestPresentDayCountriesAreInTheTable(t *testing.T) {
+	for historical, presentDay := range presentDayCountries {
+		if _, found := ZoneOfCountry(presentDay); !found {
+			t.Errorf("%s is placed at %s, which is not in the table", historical, presentDay)
+		}
+	}
+}
+
 func TestFind(t *testing.T) {
 	zone, found := Find(Europe)
 	if !found || zone.Name != "Europe" {

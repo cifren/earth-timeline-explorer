@@ -14,15 +14,22 @@ import (
 	"frise-chrono/back/internal/core/zoning"
 )
 
-// GenerateOutlines downloads the country borders, merges them zone by zone and writes
-// the outlines file served by the API. Each polygon of a country joins the country's
-// zone, except overseas territories, which join the zone they lie in.
-func GenerateOutlines(ctx context.Context, path string) error {
+// Generate downloads the country borders and writes the generated geographic data: the
+// zone outlines served by the API and a point inside each country of the zoning table.
+func Generate(ctx context.Context, outlinesPath, countryPointsPath string) error {
 	countries, err := naturalearth.FetchCountries(ctx, naturalearth.CountriesURL)
 	if err != nil {
 		return err
 	}
+	if err := generateOutlines(ctx, countries, outlinesPath); err != nil {
+		return err
+	}
+	return infrastructure.WriteCountryPoints(countryPointsPath, countryPoints(ctx, countries))
+}
 
+// generateOutlines merges the country borders zone by zone. Each polygon of a country
+// joins the country's zone, except overseas territories, which join the zone they lie in.
+func generateOutlines(ctx context.Context, countries []naturalearth.Country, path string) error {
 	bordersByZone := map[zoning.ID][]json.RawMessage{}
 	for _, country := range countries {
 		zone, known := zoning.ZoneOfRegion(country.Region, country.Subregion)
@@ -57,4 +64,21 @@ func GenerateOutlines(ctx context.Context, path string) error {
 		outlines = append(outlines, domain.Outline{Zone: zone, Polygons: polygons})
 	}
 	return infrastructure.WriteOutlines(path, outlines)
+}
+
+// countryPoints places each country of the zoning table at the label point of its
+// present-day Natural Earth country. Territories without a border of their own, such as
+// overseas departments, have no point rather than the one of their mainland.
+func countryPoints(ctx context.Context, countries []naturalearth.Country) map[string][2]float64 {
+	index := naturalearth.NewIndex(countries)
+	points := map[string][2]float64{}
+	for _, name := range zoning.Countries() {
+		country, found := index.Find(zoning.PresentDayCountry(name))
+		if !found {
+			slog.InfoContext(ctx, "country without point", "country", name)
+			continue
+		}
+		points[name] = country.LabelPoint
+	}
+	return points
 }

@@ -9,10 +9,16 @@
  *
  * OpenAPI spec version: 1.0.0
  */
+import type { Link } from './link';
 import type { LocationGranularity } from './locationGranularity';
+import type { Point } from './point';
 import type { ZoneId } from './zoneId';
 
 export interface Location {
   zone: ZoneId;
   granularity: LocationGranularity;
+  /** Where the image was taken when the granularity is `point`; with `country`, a point inside the country, absent for territories without a border of their own. */
+  point?: Point;
+  /** The point on map services (GeoHack, OpenStreetMap, Google Maps); empty when the granularity is not `point`. */
+  mapLinks: Link[];
 }

@@ -72,4 +72,16 @@ func TestToAPIImage(t *testing.T) {
 	if got.LearnMore == nil {
 		t.Fatal("learnMore must be an empty list, not null")
 	}
+	if got.Location.MapLinks == nil || len(got.Location.MapLinks) != 0 {
+		t.Fatalf("mapLinks = %+v, want an empty list without a point", got.Location.MapLinks)
+	}
+	if got.Location.Point != nil {
+		t.Fatal("a country-level location has no point")
+	}
+
+	image.Location = domain.Location{Zone: zoning.Europe, Country: "France", Granularity: domain.GranularityPoint, Point: &domain.Point{Latitude: 48.85, Longitude: 2.35}}
+	point := toAPIImage(image).Location.Point
+	if point == nil || point.Type != apigen.PointTypePoint || point.Coordinates[0] != 2.35 || point.Coordinates[1] != 48.85 {
+		t.Fatalf("point = %+v, want a GeoJSON point [longitude, latitude]", point)
+	}
 }

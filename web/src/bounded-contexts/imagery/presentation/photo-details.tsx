@@ -1,6 +1,6 @@
 import { LoadingImage } from '@shared/ui/loading-image'
 
-import type { Image } from '../domain/image'
+import type { Image, Link } from '../domain/image'
 
 type PhotoDetailsProps = {
   image: Image
@@ -43,12 +43,20 @@ export const PhotoDetails = ({ image, zoneName, onEnlarge }: PhotoDetailsProps) 
       <a className="block text-link hover:underline" href={image.sourceUrl} target="_blank" rel="noreferrer">
         View on {image.authority}
       </a>
-      {image.learnMore.length > 0 && <h4 className="pt-2 font-semibold text-muted-foreground">Learn more</h4>}
-      {image.learnMore.map((link) => (
+      <LinkGroup title="On a map" links={image.mapLinks} />
+      <LinkGroup title="Learn more" links={image.learnMore} />
+    </nav>
+  </article>
+)
+
+const LinkGroup = ({ title, links }: { title: string; links: Link[] }) =>
+  links.length > 0 && (
+    <>
+      <h4 className="pt-2 font-semibold text-muted-foreground">{title}</h4>
+      {links.map((link) => (
         <a key={link.url} className="block text-link hover:underline" href={link.url} target="_blank" rel="noreferrer">
           {link.label}
         </a>
       ))}
-    </nav>
-  </article>
-)
+    </>
+  )

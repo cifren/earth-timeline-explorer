@@ -3,6 +3,7 @@ package commons
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -102,6 +103,7 @@ func TestRandomPhotoMapsTheFile(t *testing.T) {
 		"originalHolder": {image.Certification.OriginalHolder, "Nationaal Archief"},
 		"thumbnail":      {image.File.ThumbnailURL, "https://upload.wikimedia.org/market.jpg?width=1280"},
 		"learnMore":      {image.LearnMore[0].URL, "https://en.wikipedia.org/wiki/History_of_France"},
+		"point":          {fmt.Sprint(*image.Location.Point), "{48.85 2.35}"},
 	}
 	for field, values := range checks {
 		if values[0] != values[1] {
@@ -143,5 +145,16 @@ func TestToImage(t *testing.T) {
 				t.Fatalf("toImage = %+v", image)
 			}
 		})
+	}
+}
+
+func TestToLocationFallsBackOnTheCountry(t *testing.T) {
+	denmark := toLocation(page{}, zoning.Europe, "Denmark")
+	if denmark.Granularity != domain.GranularityCountry || denmark.Point == nil || denmark.Point.Latitude < 54 || denmark.Point.Latitude > 58 {
+		t.Fatalf("Denmark located at %+v, want a point inside the country", denmark)
+	}
+
+	if guadeloupe := toLocation(page{}, zoning.LatinAmericaCaribbean, "Guadeloupe"); guadeloupe.Point != nil {
+		t.Fatalf("Guadeloupe located at %+v, want no point", *guadeloupe.Point)
 	}
 }

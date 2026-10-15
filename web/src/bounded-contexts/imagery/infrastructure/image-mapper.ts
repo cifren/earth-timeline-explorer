@@ -1,6 +1,14 @@
-import type { Image as WireImage } from '@api-client/model'
+import type { Location, Image as WireImage } from '@api-client/model'
 
-import type { Image } from '../domain/image'
+import type { Image, Position } from '../domain/image'
+
+const toPosition = ({ point, granularity }: Location): Position | undefined => {
+  if (point === undefined) {
+    return undefined
+  }
+  const [longitude = 0, latitude = 0] = point.coordinates
+  return { longitude, latitude, precise: granularity === 'point' }
+}
 
 export const toImage = (image: WireImage): Image => ({
   id: image.id,
@@ -11,6 +19,8 @@ export const toImage = (image: WireImage): Image => ({
   height: image.file.height,
   dateLabel: image.time.label,
   zoneId: image.location.zone,
+  position: toPosition(image.location),
+  mapLinks: image.location.mapLinks,
   authority: image.certification.authority,
   originalHolder: image.certification.originalHolder,
   author: image.provenance.author,

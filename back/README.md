@@ -32,7 +32,7 @@ Run with `./compose make back <target>`:
 | `lint`    | Lint, check formatting and architecture boundaries         |
 | `format`  | Format the code                                            |
 | `api`     | Regenerate the server code from `api/openapi.yaml`         |
-| `zones`   | Regenerate the zone outlines from Natural Earth (needs network) |
+| `zones`   | Regenerate the zone outlines and country points from Natural Earth (needs network) |
 
 ## API
 
@@ -97,11 +97,14 @@ event on the request step means Commons was down and the cache answered.
    time span: an EDTF value (`1953-04-03`) and a plain English label ("3 April 1953");
    an unreadable date or one outside the decade falls back to the decade ("1950s").
 5. The answer carries the image URLs on Wikimedia's servers, the zone, the source,
-   license and author, and a "Learn more" link to Wikipedia.
+   license and author, and a "Learn more" link to Wikipedia. When Commons knows where
+   the photo was taken, the location holds that point (GeoJSON) and links to it on
+   GeoHack, OpenStreetMap and Google Maps; otherwise it holds a point inside the
+   country, without links, and the granularity tells the difference.
 
 **Zone outlines** are not computed at runtime: `make zones` downloads country borders
 from Natural Earth, merges them zone by zone and generates a Go package compiled into
-the binary.
+the binary, along with a point inside each country.
 
 **Organisation**: the code follows a simplified DDD. Each business area (zones, images)
 is a bounded context that never imports another; concepts shared by several contexts

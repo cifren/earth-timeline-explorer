@@ -27,6 +27,14 @@ so they are compiled into the binary; the back serves them with long-lived HTTP 
 This generated package groups every geographic outline, so further outlines (e.g.
 sub-zones) join it next to the zones.
 
+The same command records a **point inside each country** of the Commons table: the
+label point Natural Earth places inside the country. Historical entities take the point
+of their present-day country (the Soviet Union → Russia); territories without a border
+of their own in Natural Earth (Réunion, Guadeloupe…) and entities split across several
+present-day countries (French West Africa) get none, rather than a misleading one. An
+image without coordinates is shown at its country's point, drawn larger to tell that the
+location is approximate.
+
 ## Consequences
 
 - Geometry costs nothing at runtime.

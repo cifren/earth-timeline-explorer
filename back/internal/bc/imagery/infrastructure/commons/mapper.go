@@ -55,10 +55,7 @@ func toImage(p page, country string, decade timespan.Decade) (domain.Image, bool
 		return domain.Image{}, false
 	}
 
-	granularity := domain.GranularityCountry
-	if len(p.Coordinates) > 0 {
-		granularity = domain.GranularityPoint
-	}
+	location := toLocation(p, zone, country)
 
 	return domain.Image{
 		Title: title(p.Title),
@@ -70,7 +67,7 @@ func toImage(p page, country string, decade timespan.Decade) (domain.Image, bool
 			Height:       info.Height,
 		},
 		Time:     timespan.FromText(info.ExtMetadata["DateTimeOriginal"].Value, decade),
-		Location: domain.Location{Zone: zone, Country: country, Granularity: granularity},
+		Location: location,
 		Certification: domain.Certification{
 			Level:          domain.CertificationSource,
 			Authority:      authority,
@@ -86,6 +83,21 @@ func toImage(p page, country string, decade timespan.Decade) (domain.Image, bool
 		},
 		LearnMore: []domain.Link{historyArticle(country)},
 	}, true
+}
+
+// toLocation places the image at its coordinates when Commons has them, otherwise at a
+// point inside its country, when that country has one.
+func toLocation(p page, zone zoning.ID, country string) domain.Location {
+	location := domain.Location{Zone: zone, Country: country, Granularity: domain.GranularityCountry}
+	if len(p.Coordinates) > 0 {
+		location.Granularity = domain.GranularityPoint
+		location.Point = &domain.Point{Latitude: p.Coordinates[0].Lat, Longitude: p.Coordinates[0].Lon}
+		return location
+	}
+	if point, found := zoning.PointOfCountry(country); found {
+		location.Point = &domain.Point{Latitude: point[1], Longitude: point[0]}
+	}
+	return location
 }
 
 // title turns "File:Market day in Berlin.jpg" into "Market day in Berlin".

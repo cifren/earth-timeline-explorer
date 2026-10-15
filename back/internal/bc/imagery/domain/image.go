@@ -63,6 +63,15 @@ type Location struct {
 	Zone        zoning.ID
 	Country     string
 	Granularity Granularity
+	// Point is where the image was taken with GranularityPoint, a point inside the
+	// country with GranularityCountry; it may be unknown for the latter.
+	Point *Point
+}
+
+// Point is a WGS 84 position, in decimal degrees.
+type Point struct {
+	Latitude  float64
+	Longitude float64
 }
 
 // Certification tells who vouches for the date and location of the image.

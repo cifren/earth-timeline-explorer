@@ -24,6 +24,8 @@ export * from './location';
 export * from './locationGranularity';
 export * from './multiPolygon';
 export * from './multiPolygonType';
+export * from './point';
+export * from './pointType';
 export * from './problem';
 export * from './problemResponse';
 export * from './provenance';

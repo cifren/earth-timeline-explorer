@@ -1,5 +1,12 @@
 package zoning
 
+import (
+	"maps"
+	"slices"
+
+	"frise-chrono/back/var/geozone"
+)
+
 // countryZones places each country in its zone. Keys are English short names as used
 // by Wikimedia Commons categories ("the Netherlands", "Georgia (country)"), including
 // historical entities, which are placed in the zone of their present-day territory.
@@ -107,4 +114,39 @@ var countryZones = map[string]ID{
 func ZoneOfCountry(country string) (ID, bool) {
 	zone, found := countryZones[country]
 	return zone, found
+}
+
+// presentDayCountries places historical entities at the present-day country covering
+// most of their territory, and other names at their usual one, to locate them on a map.
+var presentDayCountries = map[string]string{
+	"Austria-Hungary": "Austria", "the Soviet Union": "Russia", "the Russian Empire": "Russia",
+	"Yugoslavia": "Serbia", "Czechoslovakia": "Czechia", "East Germany": "Germany", "West Germany": "Germany",
+	"Prussia": "Germany", "the German Empire": "Germany", "the Ottoman Empire": "Turkey",
+	"Mandatory Palestine": "Israel", "British India": "India", "Ceylon": "Sri Lanka", "Persia": "Iran",
+	"East Pakistan": "Bangladesh", "Belgian Congo": "the Democratic Republic of the Congo",
+	"Zaire": "the Democratic Republic of the Congo", "Rhodesia": "Zimbabwe", "Gold Coast": "Ghana",
+	"Tanganyika": "Tanzania", "Burma": "Myanmar", "Siam": "Thailand", "the Dutch East Indies": "Indonesia",
+	"German New Guinea": "Papua New Guinea", "the State of Palestine": "Palestine",
+	"the Netherlands Antilles": "Curaçao",
+}
+
+// Countries returns the names of every country of the table, sorted.
+func Countries() []string {
+	return slices.Sorted(maps.Keys(countryZones))
+}
+
+// PresentDayCountry returns the usual present-day name of a country, which is the name
+// itself for most countries.
+func PresentDayCountry(country string) string {
+	if presentDay, historical := presentDayCountries[country]; historical {
+		return presentDay
+	}
+	return country
+}
+
+// PointOfCountry returns a point inside the country, [longitude, latitude], where a map
+// would place its label. Territories without a border of their own have none.
+func PointOfCountry(country string) ([2]float64, bool) {
+	point, found := geozone.CountryPoints[country]
+	return point, found
 }

@@ -6,7 +6,7 @@ import { useSelection } from '@core/selection/selection-store'
 /** Map, timeline and photo panel: the whole v0 experience on one screen. */
 export const ExplorerPage = () => {
   const { outlines, isError, zoneName } = useGeography()
-  const { zoneId, decade, availableZoneIds } = useImagery()
+  const { zoneId, decade, image, availableZoneIds } = useImagery()
   const selectZone = useSelection((state) => state.selectZone)
   const selectDecade = useSelection((state) => state.selectDecade)
 
@@ -19,6 +19,7 @@ export const ExplorerPage = () => {
           availableZoneIds={availableZoneIds}
           selectedZoneId={zoneId}
           decade={decade}
+          marker={image?.position}
           onSelectZone={selectZone}
         />
         {isError && (

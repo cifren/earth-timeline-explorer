@@ -46,6 +46,10 @@ describe('Explorer page', () => {
     expect(await within(panel).findByText('Market day in Paris')).toBeInTheDocument()
     expect(within(panel).getByText('3 April 1953')).toBeInTheDocument()
     expect(within(panel).getByRole('heading', { name: 'Europe · 1950s' })).toBeInTheDocument()
+    expect(within(panel).getByRole('link', { name: 'OpenStreetMap' })).toHaveAttribute(
+      'href',
+      'https://www.openstreetmap.org/?mlat=48.8566&mlon=2.3522',
+    )
     expect(requests[0]?.searchParams.toString()).toBe('zone=europe&decade=1950&limit=1')
   })
 

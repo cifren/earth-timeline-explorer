@@ -39,7 +39,12 @@ export const wireImage = (title: string, dateLabel: string): Image => ({
     height: 1200,
   },
   time: { edtf: '1953-04-03', label: dateLabel },
-  location: { zone: 'europe', granularity: 'country' },
+  location: {
+    zone: 'europe',
+    granularity: 'point',
+    point: { type: 'Point', coordinates: [2.3522, 48.8566] },
+    mapLinks: [{ label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/?mlat=48.8566&mlon=2.3522' }],
+  },
   certification: { level: 'source', authority: 'Wikimedia Commons', originalHolder: 'Nationaal Archief' },
   provenance: {
     source: 'wikimedia_commons',

@@ -5,6 +5,8 @@ import Map from 'ol/Map'
 import View from 'ol/View'
 import { defaults as defaultControls } from 'ol/control/defaults'
 import MultiPolygon from 'ol/geom/MultiPolygon'
+import Point from 'ol/geom/Point'
+import { containsCoordinate } from 'ol/extent'
 import { defaults as defaultInteractions } from 'ol/interaction/defaults'
 import Graticule from 'ol/layer/Graticule'
 import VectorLayer from 'ol/layer/Vector'
@@ -13,26 +15,39 @@ import { Stroke } from 'ol/style'
 import { useEffect, useRef, useState } from 'react'
 
 import type { ZoneOutline } from '../domain/zone-outline'
-import { isDimmed, zoneStyle, type ZoneStyleState } from './zone-style'
+import { isDimmed, markerStyle, zoneStyle, type ZoneStyleState } from './zone-style'
 
 // Far beyond one world horizontally, so that only latitude is bounded.
 const VIEW_EXTENT = [-1e7, -90, 1e7, 90]
 
 type Hover = { zoneId: string; x: number; y: number }
 
+type Marker = { longitude: number; latitude: number; precise: boolean }
+
 type WorldMapProps = {
   outlines: ZoneOutline[]
   availableZoneIds: ReadonlySet<string> | null
   selectedZoneId: string | null
   decade: number
+  /** Position to point at, shown as a round mark, larger when imprecise. */
+  marker?: Marker
   onSelectZone: (zoneId: string | null) => void
 }
 
 /** Flat world map (EPSG:4326) repeated horizontally, showing the zones to pick from. */
-export const WorldMap = ({ outlines, availableZoneIds, selectedZoneId, decade, onSelectZone }: WorldMapProps) => {
+export const WorldMap = ({
+  outlines,
+  availableZoneIds,
+  selectedZoneId,
+  decade,
+  marker,
+  onSelectZone,
+}: WorldMapProps) => {
   const targetRef = useRef<HTMLDivElement>(null)
   const [source] = useState(() => new VectorSource<Feature<MultiPolygon>>())
+  const [markerSource] = useState(() => new VectorSource<Feature<Point>>())
   const layerRef = useRef<VectorLayer | null>(null)
+  const mapRef = useRef<Map | null>(null)
   const styleStateRef = useRef<ZoneStyleState>({
     availableZoneIds,
     selectedZoneId,
@@ -59,11 +74,13 @@ export const WorldMap = ({ outlines, availableZoneIds, selectedZoneId, decade, o
           wrapX: true,
         }),
         layer,
+        new VectorLayer({ source: markerSource, style: (feature) => markerStyle(Boolean(feature.get('precise'))) }),
       ],
       view: new View({ projection: 'EPSG:4326', center: [15, 15], zoom: 2, extent: VIEW_EXTENT }),
       controls: defaultControls({ attribution: false, rotate: false }),
       interactions: defaultInteractions({ altShiftDragRotate: false, pinchRotate: false }),
     })
+    mapRef.current = map
     const zoneAt = (pixel: number[]) =>
       map.forEachFeatureAtPixel(pixel, (feature) => String(feature.getId()), {
         layerFilter: (candidate) => candidate === layer,
@@ -95,7 +112,21 @@ export const WorldMap = ({ outlines, availableZoneIds, selectedZoneId, decade, o
       target.removeEventListener('pointerleave', leave)
       map.setTarget(undefined)
     }
-  }, [source])
+  }, [source, markerSource])
+
+  useEffect(() => {
+    markerSource.clear()
+    const view = mapRef.current?.getView()
+    if (marker === undefined || view === undefined) {
+      return
+    }
+    const coordinate = [marker.longitude, marker.latitude]
+    markerSource.addFeature(new Feature({ geometry: new Point(coordinate), precise: marker.precise }))
+    if (containsCoordinate(view.calculateExtent(), coordinate)) {
+      return
+    }
+    view.animate({ center: coordinate, duration: 400 })
+  }, [markerSource, marker])
 
   useEffect(() => {
     onSelectZoneRef.current = onSelectZone

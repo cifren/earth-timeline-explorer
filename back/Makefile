@@ -28,5 +28,5 @@ format: ## Format the code
 api: ## Regenerate the server code from api/openapi.yaml
 	go tool oapi-codegen -config api/oapi-codegen.yaml api/openapi.yaml
 
-zones: ## Regenerate the zone outlines from Natural Earth
+zones: ## Regenerate the zone outlines and country points from Natural Earth
 	go run ./cmd/zones
