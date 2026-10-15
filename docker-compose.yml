@@ -1,0 +1,58 @@
+name: frise-chrono
+
+services:
+  back:
+    build:
+      context: ./back
+      target: dev
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
+    volumes:
+      - ./back:/app
+    environment:
+      HOME: /app/.cache/home
+      GOCACHE: /app/.cache/go-build
+      GOPATH: /app/.cache/go
+      HTTP_ADDR: ":8080"
+      REDIS_ADDR: "redis:6379"
+      COMMONS_USER_AGENT: "${COMMONS_USER_AGENT:-FriseChrono/0.1 (development)}"
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+
+  web:
+    build:
+      context: ./web
+      target: dev
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app
+    volumes:
+      - ./web:/app
+      # The API contract, read by the client generator as ../back/api/openapi.yaml.
+      - ./back/api:/back/api:ro
+    environment:
+      HOME: /app/.cache/home
+      npm_config_cache: /app/.cache/npm
+      VITE_API_URL: "http://localhost:8080"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - back
+
+  redis:
+    image: redis:8-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+
+# Every service joins the shared external "jacquet" network instead of a default one,
+# whose address range would collide with the VPN. The network is created by
+# `./compose` when missing; its name can be overridden with JACQUET_NETWORK.
+networks:
+  default:
+    name: ${JACQUET_NETWORK:-jacquet}
+    external: true

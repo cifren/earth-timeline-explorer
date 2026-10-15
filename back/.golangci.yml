@@ -1,0 +1,66 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - depguard
+  settings:
+    depguard:
+      # Architecture boundaries (docs/adr-common/0004, back/docs/adr-core/0006).
+      rules:
+        core:
+          files: ["**/internal/core/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/bc
+              desc: Core never depends on a bounded context
+            - pkg: frise-chrono/back/internal/app
+              desc: Core never depends on the composition root
+        shared:
+          files: ["**/internal/shared/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/bc
+              desc: Shared holds no business
+            - pkg: frise-chrono/back/internal/core
+              desc: Shared holds no business
+            - pkg: frise-chrono/back/internal/app
+              desc: Shared never depends on the composition root
+        geography:
+          files: ["**/internal/bc/geography/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/bc/imagery
+              desc: Bounded contexts never import each other
+        imagery:
+          files: ["**/internal/bc/imagery/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/bc/geography
+              desc: Bounded contexts never import each other
+        domain:
+          files: ["**/domain/**"]
+          deny:
+            - pkg: net/http
+              desc: The domain has no transport
+            - pkg: github.com/redis/go-redis
+              desc: The domain has no storage
+            - pkg: frise-chrono/back/internal/shared/apigen
+              desc: Wire types never reach the domain
+        application:
+          files: ["**/application/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/shared/apigen
+              desc: Wire types never reach the application layer
+        infrastructure:
+          files: ["**/infrastructure/**"]
+          deny:
+            - pkg: frise-chrono/back/internal/shared/apigen
+              desc: Wire types never reach the infrastructure layer
+  exclusions:
+    paths:
+      - internal/shared/apigen
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    paths:
+      - internal/shared/apigen

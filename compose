@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#
+# Single entrypoint for every Docker interaction (docs/adr-devops/0001).
+# Application commands live in each application's Makefile and run inside its
+# container through `./compose make <service> <target>`.
+#
+set -euo pipefail
+
+# Files written by the containers into the bind mounts stay owned by the host user.
+# `UID` is readonly in bash, hence the inline `env` form.
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+
+APP_SERVICES=(back web)
+
+# Shared external network: the default Docker range collides with the VPN.
+# Mirrors docker-compose.yml (overridable the same way).
+NETWORK="${JACQUET_NETWORK:-jacquet}"
+
+compose() {
+  env UID="$HOST_UID" GID="$HOST_GID" docker compose "$@"
+}
+
+# Create the shared external network once; required before any compose command.
+ensure_network() {
+  docker network inspect "$NETWORK" >/dev/null 2>&1 && return 0
+  docker network create "$NETWORK" >/dev/null
+}
+
+# Create the local .env from its template once, without overwriting local values.
+ensure_env_file() {
+  [[ -f .env ]] && return 0
+  cp .env.example .env
+  echo "Created .env from .env.example: set a contact in COMMONS_USER_AGENT."
+}
+
+require_service() {
+  local service="${1:-}"
+  for known in "${APP_SERVICES[@]}"; do
+    [[ "$service" == "$known" ]] && return 0
+  done
+  echo "Unknown service '${service}'. Expected one of: ${APP_SERVICES[*]}" >&2
+  exit 1
+}
+
+cmd_help() {
+  cat <<'EOF'
+Usage: ./compose <command> [args]
+
+  init                      First-run setup: create .env, the network, build images,
+                            install dependencies
+  up                        Start back, web and redis with live reload
+  down                      Stop and remove the containers
+  build                     Build the development images
+  logs [service]            Follow the logs (all services, or one)
+  make <service> <target>   Run a Makefile target in a service container
+                            (e.g. ./compose make back lint, ./compose make web help)
+  bash <service>            Open a shell in a service container as the host user
+  bash-root <service>       Open a shell in a service container as root
+  help                      Show this help
+  <other>                   Passed straight through to `docker compose`
+
+Services: back, web. Development URLs:
+  web  http://localhost:5173
+  api  http://localhost:8080/api
+EOF
+}
+
+cmd_init() {
+  ensure_env_file
+  ensure_network
+  compose build
+  compose run --rm back make install
+  compose run --rm web make install
+}
+
+main() {
+  local command="${1:-help}"
+  shift || true
+  case "$command" in
+    help | -h | --help) cmd_help ;;
+    init)               cmd_init ;;
+    up)                 ensure_network; compose up -d "$@" ;;
+    down)               compose down "$@" ;;
+    build)              compose build "$@" ;;
+    logs)               compose logs -f "$@" ;;
+    make)               require_service "${1:-}"; ensure_network; compose run --rm "$1" make "${@:2}" ;;
+    bash)               require_service "${1:-}"; ensure_network; compose run --rm "$1" sh ;;
+    bash-root)          require_service "${1:-}"; ensure_network; compose run --rm --user root "$1" sh ;;
+    *)                  compose "$command" "$@" ;;
+  esac
+}
+
+main "$@"

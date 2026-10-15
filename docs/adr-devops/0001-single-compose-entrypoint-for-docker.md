@@ -16,6 +16,8 @@ get it wrong.
 repository root.** It wraps `docker compose` and owns:
 
 - **rights management**: exports the host UID/GID;
+- **network**: every service joins the shared external `jacquet` network, created when
+  missing, because Docker's default address range collides with the VPN;
 - **project initialisation**: build images, install dependencies of every application;
 - **lifecycle**: `up`, `down`, `logs`, `build`;
 - **shells**: `./compose bash <service>` and `./compose bash-root <service>`;

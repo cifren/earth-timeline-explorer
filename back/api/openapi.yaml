@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: Frise Chrono API
+  version: 1.0.0
+  description: |
+    Navigate through time and space with images of the Earth.
+
+    Errors use Problem Details (RFC 9457, `application/problem+json`).
+    Image files are never served by this API: images reference their source URLs.
+servers:
+  - url: /api/v1
+tags:
+  - name: geography
+    description: Zones and their geometry.
+  - name: imagery
+    description: Images, their availability and the random draw.
+
+paths:
+  /zones:
+    get:
+      tags: [geography]
+      operationId: listZones
+      summary: List the zones
+      responses:
+        "200":
+          description: The zones, in display order.
+          headers:
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZoneList"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /zones/geometry:
+    get:
+      tags: [geography]
+      operationId: getZoneGeometry
+      summary: Get the outline of every zone
+      description: GeoJSON (RFC 7946) in WGS 84 longitude/latitude, one MultiPolygon per zone.
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          description: Entity tag of the cached copy (RFC 9110).
+          schema:
+            type: string
+      responses:
+        "304":
+          description: The cached copy is still valid.
+        "200":
+          description: The zone outlines.
+          headers:
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/ZoneFeatureCollection"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /decades/{decade}/zones:
+    get:
+      tags: [imagery]
+      operationId: listZonesWithImages
+      summary: List the zones having images for a decade
+      parameters:
+        - $ref: "#/components/parameters/DecadePath"
+      responses:
+        "200":
+          description: Zones having at least one image for the decade.
+          headers:
+            Cache-Control:
+              $ref: "#/components/headers/CacheControl"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecadeAvailability"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /images:
+    get:
+      tags: [imagery]
+      operationId: drawImages
+      summary: Draw random images of a zone and a decade
+      description: An empty list means that no image matches; it is not an error.
+      parameters:
+        - name: zone
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/ZoneId"
+        - name: decade
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Decade"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 1
+      responses:
+        "200":
+          description: Randomly drawn images.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageList"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+components:
+  parameters:
+    DecadePath:
+      name: decade
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Decade"
+
+  headers:
+    CacheControl:
+      description: HTTP caching directives (RFC 9111).
+      schema:
+        type: string
+    ETag:
+      description: Entity tag of the representation (RFC 9110).
+      schema:
+        type: string
+
+  responses:
+    Problem:
+      description: Error described as Problem Details (RFC 9457).
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          description: URI identifying the problem type; `about:blank` when none.
+          example: about:blank
+        title:
+          type: string
+          example: Bad Request
+        status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: The decade must be a multiple of 10.
+        instance:
+          type: string
+
+    ZoneId:
+      type: string
+      enum:
+        - northern-america
+        - latin-america-caribbean
+        - europe
+        - africa
+        - middle-east
+        - south-central-asia
+        - east-southeast-asia
+        - oceania
+        - antarctica
+
+    Zone:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          $ref: "#/components/schemas/ZoneId"
+        name:
+          type: string
+          example: Europe
+
+    ZoneList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Zone"
+
+    ZoneFeatureCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZoneFeature"
+
+    ZoneFeature:
+      type: object
+      required: [type, properties, geometry]
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        properties:
+          $ref: "#/components/schemas/Zone"
+        geometry:
+          $ref: "#/components/schemas/MultiPolygon"
+
+    MultiPolygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [MultiPolygon]
+        coordinates:
+          description: Polygons → rings → positions → [longitude, latitude].
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: array
+                minItems: 2
+                maxItems: 2
+                items:
+                  type: number
+                  format: double
+
+    Decade:
+      type: integer
+      description: First year of a decade, from 1840 to the current decade.
+      minimum: 1840
+      multipleOf: 10
+      example: 1950
+
+    DecadeAvailability:
+      type: object
+      required: [decade, zones]
+      properties:
+        decade:
+          $ref: "#/components/schemas/Decade"
+        zones:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZoneId"
+
+    ImageList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Image"
+
+    Image:
+      type: object
+      required: [id, title, kind, file, time, location, certification, provenance, learnMore]
+      properties:
+        id:
+          type: string
+          description: Unique across sources, `<source>:<sourceId>`.
+          example: "wikimedia_commons:File:Market day in Berlin, 1953.jpg"
+        title:
+          type: string
+          example: Market day in Berlin
+        kind:
+          $ref: "#/components/schemas/ImageKind"
+        file:
+          $ref: "#/components/schemas/ImageFile"
+        time:
+          $ref: "#/components/schemas/TimeSpan"
+        location:
+          $ref: "#/components/schemas/Location"
+        certification:
+          $ref: "#/components/schemas/Certification"
+        provenance:
+          $ref: "#/components/schemas/Provenance"
+        learnMore:
+          type: array
+          items:
+            $ref: "#/components/schemas/Link"
+
+    ImageKind:
+      type: string
+      enum:
+        - photograph
+        - contemporary_art
+        - retrospective_art
+        - document
+        - artefact
+        - archaeology
+        - reconstruction
+        - fossil
+
+    ImageFile:
+      type: object
+      required: [thumbnailUrl, originalUrl, width, height]
+      properties:
+        thumbnailUrl:
+          type: string
+          format: uri
+          description: Resized image for panels and lists.
+        originalUrl:
+          type: string
+          format: uri
+          description: Full-resolution image for the full-screen viewer.
+        width:
+          type: integer
+          description: Width of the original, in pixels.
+        height:
+          type: integer
+          description: Height of the original, in pixels.
+
+    TimeSpan:
+      type: object
+      required: [edtf, label]
+      properties:
+        edtf:
+          type: string
+          description: Extended Date/Time Format (ISO 8601-2).
+          example: 195X
+        label:
+          type: string
+          description: Plain English rendering, for display.
+          example: 1950s
+
+    Location:
+      type: object
+      required: [zone, granularity]
+      properties:
+        zone:
+          $ref: "#/components/schemas/ZoneId"
+        granularity:
+          type: string
+          enum: [point, country]
+
+    Certification:
+      type: object
+      required: [level, authority]
+      properties:
+        level:
+          type: string
+          enum: [source, error_reported, certified, partial]
+        authority:
+          type: string
+          example: Wikimedia Commons
+        originalHolder:
+          type: string
+          example: Nationaal Archief
+
+    Provenance:
+      type: object
+      required: [source, sourceId, sourceUrl, license, retrievedAt]
+      properties:
+        source:
+          type: string
+          enum: [wikimedia_commons]
+        sourceId:
+          type: string
+          example: "File:Market day in Berlin, 1953.jpg"
+        sourceUrl:
+          type: string
+          format: uri
+        license:
+          type: string
+          example: CC BY-SA 4.0
+        author:
+          type: string
+        retrievedAt:
+          type: string
+          format: date-time
+
+    Link:
+      type: object
+      required: [label, url]
+      properties:
+        label:
+          type: string
+          example: Berlin
+        url:
+          type: string
+          format: uri
