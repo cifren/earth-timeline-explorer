@@ -18,7 +18,7 @@ is used to create files instead of writing them by hand:
 |----------------------------|-----------------------------------------------------------|
 | React + TypeScript project | `npm create vite@latest -- --template react-ts`           |
 | ESLint configuration       | `npm init @eslint/config@latest`                          |
-| UI setup and components    | `npx shadcn@latest init`, then `npx shadcn@latest add <component>` (ADR web functional 0002) |
+| UI setup and components    | `npx shadcn@latest init`, then `npx shadcn@latest add <component>` |
 | API client                 | `npx orval` from its configuration (ADR web core 0004)    |
 
 - Generators run inside the web container (`./compose make web <target>` or

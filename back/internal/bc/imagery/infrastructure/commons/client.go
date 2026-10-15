@@ -13,8 +13,10 @@ import (
 	"frise-chrono/back/internal/bc/imagery/domain"
 )
 
+// Endpoint is the Wikimedia Commons API.
+const Endpoint = "https://commons.wikimedia.org/w/api.php"
+
 const (
-	endpoint    = "https://commons.wikimedia.org/w/api.php"
 	callTimeout = 3 * time.Second
 	maxLag      = "5"
 )
@@ -23,14 +25,16 @@ const (
 // User-Agent, maxlag, one request at a time, bounded duration.
 type Client struct {
 	httpClient *http.Client
+	endpoint   string
 	userAgent  string
 	serial     chan struct{}
 }
 
-// NewClient returns a client sending the given User-Agent.
-func NewClient(userAgent string) *Client {
+// NewClient returns a client calling the given API endpoint with the given User-Agent.
+func NewClient(endpoint, userAgent string) *Client {
 	return &Client{
 		httpClient: &http.Client{Timeout: callTimeout},
+		endpoint:   endpoint,
 		userAgent:  userAgent,
 		serial:     make(chan struct{}, 1),
 	}
@@ -59,7 +63,7 @@ func (c *Client) query(ctx context.Context, params url.Values, out any) error {
 	params.Set("format", "json")
 	params.Set("formatversion", "2")
 	params.Set("maxlag", maxLag)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint+"?"+params.Encode(), nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint+"?"+params.Encode(), nil)
 	if err != nil {
 		return err
 	}

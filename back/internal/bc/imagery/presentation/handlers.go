@@ -11,8 +11,8 @@ import (
 	"frise-chrono/back/internal/bc/imagery/domain"
 	"frise-chrono/back/internal/core/timespan"
 	"frise-chrono/back/internal/core/zoning"
-	"frise-chrono/back/internal/shared/apigen"
 	"frise-chrono/back/internal/shared/problem"
+	"frise-chrono/back/var/apigen"
 )
 
 const (

@@ -15,8 +15,8 @@ Use the standard library by default: `net/http` (server, router, client), `encod
 `log/slog`, `context`, `errors`. A third-party module is added only when the standard
 library has no equivalent, and is wrapped in `infrastructure` or `shared`.
 
-Accepted third-party modules: the OpenAPI code generator and its runtime (ADR back core
-0003), the Redis client (ADR back functional 0002).
+Each third-party module is introduced by the ADR that needs it, which states why the
+standard library is not enough.
 
 ## Consequences
 

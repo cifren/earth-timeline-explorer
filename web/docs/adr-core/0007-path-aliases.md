@@ -10,7 +10,7 @@ Folder-by-context plus folder-by-layer produces deep trees; relative imports suc
 
 ## Decision
 
-TypeScript path aliases, mirrored in Vite: `@app/*`, `@core/*`, `@shared/*`, and
+TypeScript path aliases, mirrored in Vite: `@app/*`, `@core/*`, `@shared/*`, one alias per generated artefact of `var/`, and
 `@bc/<context>` pointing at each context's public `index.ts`. Imports inside a context's
 own folder stay relative.
 

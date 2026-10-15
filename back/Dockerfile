@@ -1,5 +1,9 @@
-# Development: Go toolchain, live reload and linter; the source is bind-mounted.
+# Development: Go toolchain, live reload, linter, and GEOS for the zones command;
+# the source is bind-mounted.
 FROM golang:1.27 AS dev
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgeos-dev \
+ && rm -rf /var/lib/apt/lists/*
 RUN GOBIN=/usr/local/bin go install github.com/air-verse/air@latest \
  && curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b /usr/local/bin \
  && rm -rf /root/go /root/.cache

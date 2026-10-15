@@ -14,12 +14,18 @@ Zone geometry is **generated once** by a command of the `geography` context, run
 its own entry point (`cmd/zones`), and committed:
 
 - source: Natural Earth Admin 0 countries, 1:50m (public domain);
-- country → zone table: UN M49 regions and sub-regions, grouped into the 9 zones;
+- country → zone: the UN M49 region and sub-region recorded by Natural Earth for each
+  country, grouped into the 9 zones; overseas territories listed apart by M49 (French
+  Guiana, Réunion…) join the zone they lie in, not their country's;
 - countries dissolved into zones and simplified with GEOS (Go bindings), output as
   GeoJSON (RFC 7946); GEOS is used only by this command, never by the HTTP service;
-- the same table maps Commons country names to ISO 3166-1 codes.
+- Commons country names are placed in zones by a separate table of the back, since
+  Commons names countries differently and includes historical entities.
 
-The back embeds the files in its binary and serves them with long-lived HTTP caching.
+The command writes the outlines as a generated Go package in `var/` (ADR common 0008),
+so they are compiled into the binary; the back serves them with long-lived HTTP caching.
+This generated package groups every geographic outline, so further outlines (e.g.
+sub-zones) join it next to the zones.
 
 ## Consequences
 

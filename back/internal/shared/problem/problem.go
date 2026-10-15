@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"frise-chrono/back/internal/shared/apigen"
+	"frise-chrono/back/var/apigen"
 )
 
 // ContentType is the media type of Problem Details.

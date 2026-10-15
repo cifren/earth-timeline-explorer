@@ -14,14 +14,14 @@ transport churn must not ripple into the business model.
 **Simplified DDD**, the same in every application:
 
 1. **Bounded contexts first.** The top-level partition of the code is the bounded context
-   (names in ADR functional 0004). Contexts never import each other; they coordinate through
+   (names shared by every application). Contexts never import each other; they coordinate through
    Core or through the back.
 2. **Three pillars**, one-way dependencies `BC → Core → Shared`:
    - **BC**: business contexts;
    - **Core**: business shared by several contexts (e.g. *TimeSpan*, *Zone* identifiers);
      never depends on a BC;
-   - **Shared**: generic, business-free code (helpers, UI primitives, generated API
-     code); depends on neither.
+   - **Shared**: generic, business-free code (helpers, UI primitives); depends on
+     neither.
 3. **Four layers per context**, dependencies pointing inward:
    `presentation → application → infrastructure → domain`.
    - `domain`: entities, value objects, typed errors; no framework, no I/O;
@@ -40,4 +40,4 @@ transport churn must not ripple into the business model.
 - A business area lives in one folder, in both applications, under the same name.
 - The domain has no dependency on frameworks, transport or storage.
 - Less boilerplate than full hexagonal architecture; an interface appears when needed.
-- Rules hold by convention until enforced by a boundary linter (ADR common 0005).
+- These rules hold by convention unless a tool checks them.

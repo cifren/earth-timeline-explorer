@@ -15,6 +15,11 @@ linters:
               desc: Core never depends on a bounded context
             - pkg: frise-chrono/back/internal/app
               desc: Core never depends on the composition root
+        generated:
+          files: ["**/var/**"]
+          deny:
+            - pkg: frise-chrono/back/internal
+              desc: Generated code depends on no source package
         shared:
           files: ["**/internal/shared/**"]
           deny:
@@ -41,21 +46,21 @@ linters:
               desc: The domain has no transport
             - pkg: github.com/redis/go-redis
               desc: The domain has no storage
-            - pkg: frise-chrono/back/internal/shared/apigen
+            - pkg: frise-chrono/back/var/apigen
               desc: Wire types never reach the domain
         application:
           files: ["**/application/**"]
           deny:
-            - pkg: frise-chrono/back/internal/shared/apigen
+            - pkg: frise-chrono/back/var/apigen
               desc: Wire types never reach the application layer
         infrastructure:
           files: ["**/infrastructure/**"]
           deny:
-            - pkg: frise-chrono/back/internal/shared/apigen
+            - pkg: frise-chrono/back/var/apigen
               desc: Wire types never reach the infrastructure layer
   exclusions:
     paths:
-      - internal/shared/apigen
+      - var
 
 formatters:
   enable:
@@ -63,4 +68,4 @@ formatters:
     - goimports
   exclusions:
     paths:
-      - internal/shared/apigen
+      - var

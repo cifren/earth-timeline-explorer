@@ -15,9 +15,9 @@ import (
 	imageryapp "frise-chrono/back/internal/bc/imagery/application"
 	"frise-chrono/back/internal/bc/imagery/infrastructure/commons"
 	imagery "frise-chrono/back/internal/bc/imagery/presentation"
-	"frise-chrono/back/internal/shared/apigen"
 	"frise-chrono/back/internal/shared/cache"
 	"frise-chrono/back/internal/shared/problem"
+	"frise-chrono/back/var/apigen"
 )
 
 const (
@@ -39,40 +39,17 @@ type api struct {
 
 // Run serves the API until ctx is cancelled, then shuts down gracefully.
 func Run(ctx context.Context, config Config) error {
-	outlines, err := geographyinfra.LoadOutlines()
+	redisClient := redis.NewClient(&redis.Options{Addr: config.RedisAddr})
+	defer func() { _ = redisClient.Close() }()
+
+	handler, err := newHandler(config, commons.Endpoint, redisClient)
 	if err != nil {
 		return err
 	}
 
-	redisClient := redis.NewClient(&redis.Options{Addr: config.RedisAddr})
-	defer func() { _ = redisClient.Close() }()
-	store := cache.New(redisClient)
-
-	commonsClient := commons.NewClient(config.CommonsUserAgent)
-	drawer := imageryapp.NewDrawer(commons.NewCountryCatalog(commonsClient, store), commons.NewPhotoSource(commonsClient))
-
-	strict := apigen.NewStrictHandlerWithOptions(
-		api{geography.NewHandlers(outlines), imagery.NewHandlers(drawer)},
-		nil,
-		apigen.StrictHTTPServerOptions{
-			RequestErrorHandlerFunc:  badRequest,
-			ResponseErrorHandlerFunc: internalError,
-		},
-	)
-
-	mux := http.NewServeMux()
-	apigen.HandlerWithOptions(strict, apigen.StdHTTPServerOptions{
-		BaseURL:          apiBaseURL,
-		BaseRouter:       mux,
-		ErrorHandlerFunc: badRequest,
-	})
-	mux.HandleFunc("GET /api/health", health)
-	mux.HandleFunc("GET /api/openapi.json", openAPIDocument)
-	mux.HandleFunc("GET /api/docs", documentation)
-
 	server := &http.Server{
 		Addr:              config.HTTPAddr,
-		Handler:           withRequestLog(withCORS(config.CORSAllowedOrigins, withRecovery(mux))),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      20 * time.Second,
@@ -98,6 +75,40 @@ func Run(ctx context.Context, config Config) error {
 		return fmt.Errorf("server shutdown: %w", err)
 	}
 	return nil
+}
+
+// newHandler wires the contexts into the HTTP handler of the API, calling Wikimedia
+// Commons at the given endpoint.
+func newHandler(config Config, commonsEndpoint string, redisClient *redis.Client) (http.Handler, error) {
+	outlines, err := geographyinfra.LoadOutlines()
+	if err != nil {
+		return nil, err
+	}
+
+	commonsClient := commons.NewClient(commonsEndpoint, config.CommonsUserAgent)
+	store := cache.New(redisClient)
+	drawer := imageryapp.NewDrawer(commons.NewCountryCatalog(commonsClient, store), commons.NewPhotoSource(commonsClient))
+
+	strict := apigen.NewStrictHandlerWithOptions(
+		api{geography.NewHandlers(outlines), imagery.NewHandlers(drawer)},
+		nil,
+		apigen.StrictHTTPServerOptions{
+			RequestErrorHandlerFunc:  badRequest,
+			ResponseErrorHandlerFunc: internalError,
+		},
+	)
+
+	mux := http.NewServeMux()
+	apigen.HandlerWithOptions(strict, apigen.StdHTTPServerOptions{
+		BaseURL:          apiBaseURL,
+		BaseRouter:       mux,
+		ErrorHandlerFunc: badRequest,
+	})
+	mux.HandleFunc("GET /api/health", health)
+	mux.HandleFunc("GET /api/openapi.json", openAPIDocument)
+	mux.HandleFunc("GET /api/docs", documentation)
+
+	return withRequestLog(withCORS(config.CORSAllowedOrigins, withRecovery(mux))), nil
 }
 
 func badRequest(w http.ResponseWriter, _ *http.Request, err error) {

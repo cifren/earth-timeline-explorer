@@ -6,7 +6,7 @@ import (
 
 	"frise-chrono/back/internal/bc/geography/infrastructure"
 	"frise-chrono/back/internal/core/zoning"
-	"frise-chrono/back/internal/shared/apigen"
+	"frise-chrono/back/var/apigen"
 )
 
 const (

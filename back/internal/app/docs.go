@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"frise-chrono/back/internal/shared/apigen"
 	"frise-chrono/back/internal/shared/problem"
+	"frise-chrono/back/var/apigen"
 )
 
 // documentationPage renders the OpenAPI document with Redoc.

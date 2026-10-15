@@ -15,7 +15,8 @@ boundary checker.
 - **depguard** rules in the same configuration enforce the boundaries: no import between
   contexts, `core` never imports `bc`, `shared` imports neither, `domain` imports no
   infrastructure or framework package.
-- Generated code (`apigen`) is excluded from linting.
+- Generated code (`var/`) is excluded from linting; a depguard rule forbids it to import
+  hand-written packages.
 
 ## Consequences
 

@@ -2,7 +2,7 @@ package presentation
 
 import (
 	"frise-chrono/back/internal/bc/imagery/domain"
-	"frise-chrono/back/internal/shared/apigen"
+	"frise-chrono/back/var/apigen"
 )
 
 func toAPIImage(image domain.Image) apigen.Image {

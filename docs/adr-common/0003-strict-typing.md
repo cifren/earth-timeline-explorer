@@ -5,8 +5,8 @@ Status: Accepted — not yet implemented
 
 ## Context
 
-Permissive typing lets null dereferences and untyped values reach runtime. The API
-contract is typed end to end (ADR functional 0003); escape hatches break that chain.
+Permissive typing lets null dereferences and untyped values reach runtime. Data crossing
+the applications is meant to be typed end to end; escape hatches break that chain.
 
 ## Decision
 

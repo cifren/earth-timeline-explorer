@@ -11,12 +11,13 @@ formatter and a boundary checker.
 ## Decision
 
 - **ESLint** with recommended presets only: `typescript-eslint` (type-checked),
-  `eslint-plugin-react-hooks`, `eslint-plugin-jsx-a11y`.
+  `eslint-plugin-react-hooks`, `eslint-plugin-jsx-a11y`. Their `no-explicit-any` rule
+  enforces ADR web core 0005.
 - **Prettier** is the only formatter; ESLint does not check formatting.
 - **eslint-plugin-boundaries** enforces the architecture: no import between contexts,
   contexts imported only through their `index.ts`, `core` never imports a context,
   `shared` imports neither, layers point inward.
-- Generated code (`api-client`) is excluded from lint and formatting.
+- Generated code (`var/`) is excluded from lint and formatting.
 
 ## Consequences
 

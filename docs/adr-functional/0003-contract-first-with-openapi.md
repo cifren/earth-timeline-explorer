@@ -15,7 +15,8 @@ The API is described first, in one OpenAPI document owned by the back,
 
 - the back generates its server interfaces from it;
 - each client generates its types and HTTP calls from it;
-- generated code is committed and never edited by hand;
+- generated code lives in each application's `var/` (ADR common 0008), committed and
+  never edited by hand;
 - regeneration is a deliberate command, not a build step: the compile errors that follow
   are the drift detection.
 

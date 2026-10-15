@@ -13,7 +13,7 @@ release.
 
 One repository holds every application, each in its own top-level folder:
 
-- `back/` — the Go service, which also owns the API contract (ADR functional 0003) and
+- `back/` — the Go service, which also owns the API contract and
   the generation of its reference data (e.g. zone geometry);
 - `web/` — the React web application;
 - `mobile/` — the mobile application, when it starts;
@@ -26,5 +26,5 @@ contract to generate their client code.
 ## Consequences
 
 - A contract change and its consumers land in the same commit.
-- One clone gives the whole system; onboarding is a single entrypoint (ADR devops 0001).
+- One clone gives the whole system.
 - Each application keeps its own tooling and can be built and deployed on its own.

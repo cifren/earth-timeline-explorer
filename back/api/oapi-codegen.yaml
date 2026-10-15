@@ -1,6 +1,6 @@
 # oapi-codegen configuration: typed models and strict server interfaces for net/http.
 package: apigen
-output: internal/shared/apigen/apigen.gen.go
+output: var/apigen/apigen.gen.go
 generate:
   models: true
   std-http-server: true

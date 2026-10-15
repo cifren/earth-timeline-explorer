@@ -13,17 +13,15 @@ layers per context. A React application needs a concrete folder layout for them.
 ```
 src/
 ├── app/                        composition root: routes, providers, page shells
-├── bounded-contexts/
-│   └── <context>/              e.g. geography, chronology, imagery
-│       ├── domain/             types, value objects, pure functions
-│       ├── application/        hooks orchestrating server and client state
-│       ├── infrastructure/     gateways calling the API client, mappers
-│       ├── presentation/       components
-│       └── index.ts            public API of the context
-├── core/<concept>/             shared business, e.g. exploration (selected zone, decade)
-└── shared/
-    ├── api-client/             generated from the OpenAPI contract
-    └── <package>/              business-free UI primitives, hooks, helpers
+├── bounded-contexts/<context>/
+│   ├── domain/                 types, value objects, pure functions
+│   ├── application/            hooks orchestrating server and client state
+│   ├── infrastructure/         gateways calling the API client, mappers
+│   ├── presentation/           components
+│   └── index.ts                public API of the context
+├── core/<concept>/             business shared by several contexts
+└── shared/<package>/           business-free UI primitives, hooks, helpers
+var/<artefact>/                 generated code only (ADR common 0008)
 ```
 
 - Outside code imports a context only through its `index.ts`, and only from `app/`.

@@ -30,7 +30,17 @@ by Frise Chrono's business goes to `adr-functional` (e.g. Wikimedia Commons acce
 flat wrapped map).
 
 `<app>` is `back`, `web`, later `mobile`. References between folders name the folder,
-e.g. "ADR common 0003", "ADR web core 0002".
+e.g. "ADR common NNNN", "ADR web core NNNN".
+
+**References point to the past only.** ADRs are read in this order:
+
+`docs/adr-common` → `docs/adr-functional` → `docs/adr-devops` → `<app>/docs/adr-core`
+→ `<app>/docs/adr-functional` → `<app>/docs/adr-devops`
+
+An ADR may reference a lower-numbered ADR of its own folder, or any ADR of a folder
+placed before its own in this order; never a later one, and never another application's
+ADRs. When a new decision completes an older one, the new ADR cites the old one: the
+older ADR is not edited to point forward.
 
 **Format** — every ADR is a Markdown file `NNNN-kebab-title.md`, in English:
 
@@ -49,8 +59,9 @@ Status: Accepted
 - Only **structural** decisions: technology choices, project structure, build and run
   tooling, cross-cutting concerns that are hard to reverse.
 - **Concise**: a few lines per section; a table or a short example rather than prose.
-- Decision and principle level, not implementation: no class names or file paths that
-  drift. A short *Implementation status* note may point at where a decision is realised.
+- Decision and principle level, not implementation: no class names, file paths or copy
+  of the project's tree, which drift. A layout is described as a pattern with
+  placeholders (`bc/<context>/`), never as a list of the current folders.
 - Status: `Proposed`, `Accepted`, `Accepted — not yet implemented`, `Superseded by NNNN`.
 - Once implementation starts, ADRs are immutable: a change of decision is a new ADR that
   supersedes the old one.

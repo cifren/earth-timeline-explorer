@@ -12,20 +12,18 @@ linter can protect.
 ## Decision
 
 ```
-api/openapi.yaml               API contract, source of truth (ADR functional 0003)
-cmd/
-├── server/                    entry point of the HTTP service
-└── <tool>/                    entry points of command-line tools, e.g. zones
+api/                       API contract (ADR functional 0003)
+cmd/<command>/             entry points: the HTTP service, command-line tools
 internal/
-├── app/                       composition root: wires contexts, HTTP server, middleware
-├── bc/
-│   └── <context>/             e.g. geography, imagery
-│       ├── domain/
-│       ├── application/
-│       ├── infrastructure/
-│       └── presentation/      what the outside sees: HTTP handlers, CLI commands
-├── core/<concept>/            shared business, e.g. timespan, zoning
-└── shared/<package>/          business-free code, e.g. apigen, problem, httpclient
+├── app/                   composition roots
+├── bc/<context>/
+│   ├── domain/
+│   ├── application/
+│   ├── infrastructure/
+│   └── presentation/      what the outside sees: HTTP handlers, CLI commands
+├── core/<concept>/        business shared by several contexts
+└── shared/<package>/      business-free code
+var/<artefact>/            generated code only (ADR common 0008)
 ```
 
 - Everything lives under `internal/`, so no package is importable from outside the
@@ -38,5 +36,5 @@ internal/
 ## Consequences
 
 - The tree mirrors the common architecture one to one.
-- Go's `internal/` rule plus the boundary linter (ADR back core 0006) keep imports
-  in the allowed directions.
+- Go's `internal/` rule keeps every package private to the module; the direction of
+  imports between pillars and layers is left to a boundary checker (ADR common 0005).

@@ -12,7 +12,7 @@ library's styles.
 ## Decision
 
 - **Tailwind CSS** for styling.
-- **shadcn/ui** components (built on Radix primitives) copied into `src/shared/ui/`,
+- **shadcn/ui** components (built on Radix primitives) copied into `shared/`,
   owned and adapted in the code base: sheet (side panel), button, skeleton, dialog.
 
 ## Consequences

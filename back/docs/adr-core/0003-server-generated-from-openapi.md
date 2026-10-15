@@ -13,7 +13,7 @@ request and response types would drift from it.
 Server types and interfaces are generated with **oapi-codegen** in **strict server**
 mode: one typed method per operation, typed request and response objects.
 
-- Generated code lives in `internal/shared/apigen`, committed, never edited.
+- Generated code lives in `var/` (ADR common 0008), committed, never edited.
 - Each context's `presentation` implements the operations of its OpenAPI tag; the
   composition root assembles them into the single generated interface.
 - Generated types are wire types: hand-written mappers in `presentation` convert them
