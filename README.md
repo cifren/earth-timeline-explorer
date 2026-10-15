@@ -84,3 +84,9 @@ Decisions are recorded as short ADRs:
 | [docs/adr-devops/](docs/adr-devops/)           | Whole-system build and run                     |
 | [back/docs/](back/docs/)                       | Back decisions (core, functional, devops)      |
 | [web/docs/](web/docs/)                         | Web decisions (core, functional, devops)       |
+
+## License
+
+The code is released under the [GNU General Public License v3.0](LICENSE). Images shown
+by the application are not part of this repository: each keeps its own license, displayed
+with its attribution.
