@@ -2,9 +2,12 @@ import { LoadingImage } from '@shared/ui/loading-image'
 
 import type { Image, Link } from '../domain/image'
 
-type PhotoDetailsProps = {
+type PhotoInfoProps = {
   image: Image
   zoneName: string | undefined
+}
+
+type PhotoDetailsProps = PhotoInfoProps & {
   onEnlarge: () => void
 }
 
@@ -17,6 +20,13 @@ export const PhotoDetails = ({ image, zoneName, onEnlarge }: PhotoDetailsProps) 
         className="aspect-4/3 w-full rounded bg-muted object-cover"
       />
     </button>
+    <PhotoInfo image={image} zoneName={zoneName} />
+  </article>
+)
+
+/** Title, date, credits and links of a photo. */
+export const PhotoInfo = ({ image, zoneName }: PhotoInfoProps) => (
+  <div className="space-y-3 text-sm">
     <div>
       <h3 className="line-clamp-3 text-base font-semibold" title={image.title}>
         {image.title}
@@ -46,7 +56,7 @@ export const PhotoDetails = ({ image, zoneName, onEnlarge }: PhotoDetailsProps) 
       <LinkGroup title="On a map" links={image.mapLinks} />
       <LinkGroup title="Learn more" links={image.learnMore} />
     </nav>
-  </article>
+  </div>
 )
 
 const LinkGroup = ({ title, links }: { title: string; links: Link[] }) =>

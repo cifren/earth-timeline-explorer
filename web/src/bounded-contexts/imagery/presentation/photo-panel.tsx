@@ -1,12 +1,12 @@
 import { Suspense, lazy, useState } from 'react'
 
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@shared/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@shared/ui/sheet'
 import { Skeleton } from '@shared/ui/skeleton'
 
 import { useImagery } from '../application/use-imagery'
 import type { Image } from '../domain/image'
 import { PhotoDetails } from './photo-details'
-import { RenewButton } from './renew-button'
+import { PhotoSide } from './photo-side'
 
 const PhotoViewer = lazy(() => import('./photo-viewer').then((module) => ({ default: module.PhotoViewer })))
 
@@ -66,13 +66,14 @@ export const PhotoPanel = ({ zoneName }: PhotoPanelProps) => {
         onInteractOutside={(event) => event.preventDefault()}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <SheetHeader className="border-b">
-          <SheetTitle>
-            {zoneName} <span className="font-normal text-muted-foreground">· {decade}s</span>
-          </SheetTitle>
-          <SheetDescription className="sr-only">A random photo of this zone and decade.</SheetDescription>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto p-4">
+        <SheetDescription className="sr-only">A random photo of this zone and decade.</SheetDescription>
+        <PhotoSide
+          zoneName={zoneName}
+          decade={decade}
+          titleAs={SheetTitle}
+          renewDisabled={isDrawing || image === null}
+          onRenew={renew}
+        >
           <PanelBody
             image={image}
             isDrawing={isDrawing}
@@ -81,13 +82,17 @@ export const PhotoPanel = ({ zoneName }: PhotoPanelProps) => {
             decade={decade}
             onEnlarge={() => setEnlarged(true)}
           />
-        </div>
-        <SheetFooter className="border-t">
-          <RenewButton disabled={isDrawing || image === null} onClick={renew} />
-        </SheetFooter>
+        </PhotoSide>
         {enlarged && image && (
           <Suspense>
-            <PhotoViewer image={image} isDrawing={isDrawing} onRenew={renew} onClose={() => setEnlarged(false)} />
+            <PhotoViewer
+              image={image}
+              zoneName={zoneName}
+              decade={decade}
+              isDrawing={isDrawing}
+              onRenew={renew}
+              onClose={() => setEnlarged(false)}
+            />
           </Suspense>
         )}
       </SheetContent>
